@@ -8,7 +8,7 @@ import MessageSquareIcon from '../../icons/MessageSquareIcon';
 import SlashIcon from '../../icons/SlashIcon'; 
 import CheckCircleIcon from '../../icons/CheckCircleIcon'; 
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
 
 interface AdminCustomerManagementSectionProps {
   customers: Customer[];

@@ -7,7 +7,7 @@ import InputField from '../../shared/InputField';
 import PlusCircleIcon from '../../icons/PlusCircleIcon';
 import TrashIcon from '../../icons/TrashIcon';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
 
 interface TagData {
     name: string;

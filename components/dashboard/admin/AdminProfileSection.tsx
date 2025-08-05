@@ -4,7 +4,7 @@ import axios from 'axios';
 import { UserProfile } from '../../../types';
 import InputField from '../../shared/InputField';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
 
 interface AdminProfileSectionProps {
   user: UserProfile | null;
