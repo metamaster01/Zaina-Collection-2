@@ -50,7 +50,7 @@ import { Product, NavLinkItem, CartItemForCheckout, CartItem, ShoppableVideo, Cm
 import { useScrollAnimation } from './hooks/useScrollAnimation';
 
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
 
 const defaultSiteSettings: SiteSettingsBundle = {
     storeSettings: {

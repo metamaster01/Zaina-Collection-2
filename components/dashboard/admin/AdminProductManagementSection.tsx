@@ -6,7 +6,7 @@ import EditIcon from '../../icons/EditIcon';
 import TrashIcon from '../../icons/TrashIcon';
 import Modal from '../../shared/Modal';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
 
 interface AdminProductManagementSectionProps {
   onEditProduct: (product: Product) => void;
