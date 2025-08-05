@@ -9,7 +9,7 @@ import MoonIcon from '../../icons/MoonIcon';
 import NotificationBell from './NotificationBell';
 import { Notification, PageName, UserProfile, AdminUser } from '../../../types';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface AdminHeaderProps {
   pageTitle: string;

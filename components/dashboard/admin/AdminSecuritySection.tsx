@@ -7,7 +7,7 @@ import InputField from '../../shared/InputField';
 import Modal from '../../shared/Modal';
 import QrCodeIcon from '../../icons/QrCodeIcon';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface AdminSecuritySectionProps {}
 

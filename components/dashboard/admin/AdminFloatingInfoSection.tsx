@@ -7,7 +7,7 @@ import PlusCircleIcon from '../../icons/PlusCircleIcon';
 import EditIcon from '../../icons/EditIcon';
 import TrashIcon from '../../icons/TrashIcon';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface AdminFloatingInfoSectionProps {
   items: FloatingInfo[];

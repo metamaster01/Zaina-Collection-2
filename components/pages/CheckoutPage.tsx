@@ -7,7 +7,7 @@ import InputField from '../shared/InputField';
 import Accordion from '../shared/Accordion'; 
 import OrderSuccessModal from '../OrderSuccessModal'; 
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 declare global {
   interface Window {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface ChatMessage {
     id: string;

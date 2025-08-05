@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Notification, PageName } from '../../../types';
 import BellIcon from '../../icons/BellIcon';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface AdminNotificationsSectionProps {
   onNotificationClick: (page: PageName, data?: any) => void;

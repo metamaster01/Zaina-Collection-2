@@ -8,7 +8,7 @@ import ShoppingCartIcon from '../../icons/ShoppingCartIcon';
 import PackageIcon from '../../icons/PackageIcon';
 import UsersIcon from '../../icons/UsersIcon';
 
-const API_BASE_URL = 'https://zaina-collection-backend.vercel.app/api';
+const API_BASE_URL = 'https://zaina-collection-backend.vercel.app';
 
 interface AdminOverviewSectionProps {
   navigateToPage: (page: PageName, data?: any) => void;
