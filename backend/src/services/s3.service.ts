@@ -14,8 +14,9 @@ const storage = new Storage({
     // token_uri: process.env.GCP_TOKEN_URI, // Removed because it's not a valid property
     // auth_provider_x509_cert_url: process.env.GCP_AUTH_PROVIDER,
     // client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
-    universe_domain : process.env.GCP_UNIVERSE_DOMAIN , 
-});
+    universe_domain: process.env.GCP_UNIVERSE_DOMAIN,
+  },
+})
 
 const bucketName = config.gcs.bucketName;
 
