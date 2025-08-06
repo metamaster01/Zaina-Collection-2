@@ -77,7 +77,7 @@ model PaymentMethod {
 model Product {
   id                  String           @id @default(auto()) @map("_id") @db.ObjectId
   name                String
-  slug                String          
+  slug                String          @unique
   price               Float // Selling Price
   mrp                 Float // MRP
   imageUrl            String
@@ -111,7 +111,6 @@ model Product {
   reviews    ProductReview[]
 
   @@index([categoryName])
-  @@index([slug])
 }
 
 model ProductVariant {
