@@ -24,7 +24,7 @@ const AdminOverviewSection: React.FC<AdminOverviewSectionProps> = ({ navigateToP
         setIsLoading(true);
         try {
             const token = localStorage.getItem('zaina-authToken');
-            const response = await axios.get(`${API_BASE_URL}/admin/dashboard-stats`, {
+            const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/dashboard-stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setStats(response.data);

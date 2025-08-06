@@ -27,7 +27,7 @@ const AdminTagsSection: React.FC<AdminTagsSectionProps> = ({ products: initialPr
     setIsLoading(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`${API_BASE_URL}/admin/tags`, {
+        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/tags`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setTags(response.data);
@@ -59,7 +59,7 @@ const AdminTagsSection: React.FC<AdminTagsSectionProps> = ({ products: initialPr
       if(window.confirm(`Are you sure you want to delete the tag "${tagName}"? This will remove it from all products.`)) {
           try {
               const token = localStorage.getItem('zaina-authToken');
-              await axios.delete(`${API_BASE_URL}/admin/tags/${encodeURIComponent(tagName)}`, {
+              await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/tags/${encodeURIComponent(tagName)}`, {
                   headers: { Authorization: `Bearer ${token}` }
               });
               alert(`Tag "${tagName}" deleted successfully.`);

@@ -109,7 +109,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
     setAppliedCoupon(null);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.post(`${API_BASE_URL}/user/coupons/validate`, 
+        const response = await axios.post(`https://zaina-collection-backend.vercel.app/api/user/coupons/validate`, 
         { code: couponCode },
         { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -195,7 +195,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
     setIsProcessing(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const { data: { orderId } } = await axios.post(`${API_BASE_URL}/orders/payment/create`, 
+        const { data: { orderId } } = await axios.post(`https://zaina-collection-backend.vercel.app/api/orders/payment/create`, 
             { totalAmount: total },
             { headers: { Authorization: `Bearer ${token}` } }
         );

@@ -39,7 +39,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const fetchNotifications = async () => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`${API_BASE_URL}/admin/notifications`, {
+        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/notifications`, {
              headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);

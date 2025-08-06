@@ -24,7 +24,7 @@ const AdminSecuritySection: React.FC<AdminSecuritySectionProps> = () => {
     setIsLoading(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`${API_BASE_URL}/admin/logs`, {
+        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/logs`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setActivityLogs(response.data);

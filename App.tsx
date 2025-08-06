@@ -50,7 +50,7 @@ import { Product, NavLinkItem, CartItemForCheckout, CartItem, ShoppableVideo, Cm
 import { useScrollAnimation } from './hooks/useScrollAnimation';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const defaultSiteSettings: SiteSettingsBundle = {
     storeSettings: {
@@ -221,7 +221,7 @@ export function App(): React.ReactElement {
 
   const fetchInitialData = useCallback(async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/site-data`);
+        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/site-data`);
         const data = response.data;
         
         setProducts(data.products || []);
@@ -259,7 +259,7 @@ export function App(): React.ReactElement {
     const token = localStorage.getItem('zaina-authToken');
     if (!token || !isLoggedIn) return;
     try {
-        const response = await axios.get(`${API_BASE_URL}/user/dashboard-data`, {
+        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/user/dashboard-data`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = response.data;
@@ -280,31 +280,31 @@ export function App(): React.ReactElement {
     if (!token) return;
     try {
         const [dashboardRes, reviewsRes, faqsRes, categoriesRes, variantsRes, wishlistRes, shippingZonesRes, shippingProvidersRes, paymentGatewaysRes] = await Promise.all([
-             axios.get(`${API_BASE_URL}/admin/dashboard-all`, {
+             axios.get(`https://zaina-collection-backend.vercel.app/api/admin/dashboard-all`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/reviews`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/reviews`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/faqs`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/faqs`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/categories`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/categories`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/variant-attributes`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/analytics/wishlist`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/analytics/wishlist`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-             axios.get(`${API_BASE_URL}/admin/shipping/zones`, {
+             axios.get(`https://zaina-collection-backend.vercel.app/api/admin/shipping/zones`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/shipping/providers`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/shipping/providers`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get(`${API_BASE_URL}/admin/payments/gateways`, {
+            axios.get(`https://zaina-collection-backend.vercel.app/api/admin/payments/gateways`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
         ]);
@@ -418,7 +418,7 @@ export function App(): React.ReactElement {
       if (isLoggedIn) {
         try {
             const token = localStorage.getItem('zaina-authToken');
-            await axios.post(`${API_BASE_URL}/user/recently-viewed`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/user/recently-viewed`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
         } catch (error) {
             console.error("Failed to sync recently viewed item", error);
             // Optionally revert optimistic update, though it's low-risk
@@ -456,7 +456,9 @@ export function App(): React.ReactElement {
   // Auth Handlers
   const handleLogin = async (credentials: {email: string, password: string}): Promise<{success: boolean, error?: string, role?: UserRole}> => {
       try {
-        const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+  
+        console.log(API_BASE_URL)
+        const response = await axios.post(`https://zaina-collection-backend.vercel.app/api/auth/login`, credentials);
         const { token, user } = response.data;
         localStorage.setItem('zaina-authToken', token);
         setIsLoggedIn(true);
@@ -478,7 +480,7 @@ export function App(): React.ReactElement {
 
   const handleRegister = async (credentials: {name: string, email: string, password: string}): Promise<{success: boolean, error?: string}> => {
       try {
-        await axios.post(`${API_BASE_URL}/auth/register`, credentials);
+        await axios.post(`https://zaina-collection-backend.vercel.app/api/auth/register`, credentials);
         // Automatically log in after successful registration
         const loginResult = await handleLogin({ email: credentials.email, password: credentials.password });
         return { success: loginResult.success, error: loginResult.error };
@@ -552,7 +554,7 @@ export function App(): React.ReactElement {
   const handlePlaceOrder = async (order: any, guestDetails?: { email: string, createAccount: boolean, password?: string }) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.post(`${API_BASE_URL}/orders`, { order, guestDetails }, {
+        const response = await axios.post(`https://zaina-collection-backend.vercel.app/api/orders`, { order, guestDetails }, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (buyNowIntent) {
@@ -589,7 +591,7 @@ export function App(): React.ReactElement {
     if (isLoggedIn) {
         try {
             const token = localStorage.getItem('zaina-authToken');
-            await axios.post(`${API_BASE_URL}/user/wishlist/toggle`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/user/wishlist/toggle`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
         } catch (error) {
             console.error("Failed to sync wishlist", error);
             // Revert optimistic update on failure
@@ -626,7 +628,7 @@ export function App(): React.ReactElement {
   const onUpdateProfile = async (updatedProfile: UserProfile) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.put(`${API_BASE_URL}/user/profile`, updatedProfile, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`https://zaina-collection-backend.vercel.app/api/user/profile`, updatedProfile, { headers: { Authorization: `Bearer ${token}` } });
         setCurrentUser(prev => ({...prev, ...updatedProfile} as UserProfile));
         alert('Profile saved successfully!');
     } catch(err) {
@@ -637,7 +639,7 @@ export function App(): React.ReactElement {
   const onChangePassword = async (passwords: { current: string; new: string }): Promise<{ success: boolean; message: string }> => {
      try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.put(`${API_BASE_URL}/user/change-password`, passwords, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.put(`https://zaina-collection-backend.vercel.app/api/user/change-password`, passwords, { headers: { Authorization: `Bearer ${token}` } });
         return { success: true, message: response.data.message };
      } catch (err: any) {
         return { success: false, message: err.response?.data?.message || "Password change failed." };
@@ -648,9 +650,9 @@ export function App(): React.ReactElement {
     try {
         const token = localStorage.getItem('zaina-authToken');
         if (userAddresses.some(a => a.id === address.id)) {
-             await axios.put(`${API_BASE_URL}/user/addresses/${address.id}`, address, { headers: { Authorization: `Bearer ${token}` } });
+             await axios.put(`https://zaina-collection-backend.vercel.app/api/user/addresses/${address.id}`, address, { headers: { Authorization: `Bearer ${token}` } });
         } else {
-            await axios.post(`${API_BASE_URL}/user/addresses`, address, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/user/addresses`, address, { headers: { Authorization: `Bearer ${token}` } });
         }
         await fetchUserData(); // Re-fetch all user data
     } catch (err) {
@@ -661,7 +663,7 @@ export function App(): React.ReactElement {
   const onDeleteAddress = async (addressId: string) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.delete(`${API_BASE_URL}/user/addresses/${addressId}`, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.delete(`https://zaina-collection-backend.vercel.app/api/user/addresses/${addressId}`, { headers: { Authorization: `Bearer ${token}` } });
         await fetchUserData();
         alert('Address deleted.');
     } catch (err) {
@@ -673,9 +675,9 @@ export function App(): React.ReactElement {
     try {
         const token = localStorage.getItem('zaina-authToken');
         if (userSupportTickets.some(t => t.id === ticket.id)) {
-             await axios.put(`${API_BASE_URL}/user/support-tickets/${ticket.id}`, ticket, { headers: { Authorization: `Bearer ${token}` } });
+             await axios.put(`https://zaina-collection-backend.vercel.app/api/user/support-tickets/${ticket.id}`, ticket, { headers: { Authorization: `Bearer ${token}` } });
         } else {
-            await axios.post(`${API_BASE_URL}/user/support-tickets`, ticket, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/user/support-tickets`, ticket, { headers: { Authorization: `Bearer ${token}` } });
         }
         await fetchUserData();
     } catch (err) {
@@ -693,12 +695,12 @@ export function App(): React.ReactElement {
         const isUpdating = productData.id && isMongoDbId(productData.id);
         
         if (isUpdating) {
-            await axios.put(`${API_BASE_URL}/admin/products/${productData.id}`, productData, { headers });
+            await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/products/${productData.id}`, productData, { headers });
             alert('Product updated successfully!');
         } else {
             // For new products, remove the temporary ID before sending
             const { id, ...payload } = productData;
-            await axios.post(`${API_BASE_URL}/admin/products`, payload, { headers });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/products`, payload, { headers });
             alert('Product created successfully!');
         }
         await fetchInitialData();
@@ -723,9 +725,9 @@ export function App(): React.ReactElement {
         };
         
         if (isUpdating) {
-            await axios.put(`${API_BASE_URL}/admin/categories/${category.id}`, payload, { headers });
+            await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/categories/${category.id}`, payload, { headers });
         } else {
-            await axios.post(`${API_BASE_URL}/admin/categories`, payload, { headers });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/categories`, payload, { headers });
         }
         alert('Category saved successfully!');
         await fetchInitialData();
@@ -744,10 +746,10 @@ export function App(): React.ReactElement {
         const isUpdating = attribute.id && isMongoDbId(attribute.id);
         
         if (isUpdating) {
-            await axios.put(`${API_BASE_URL}/admin/variant-attributes/${attribute.id}`, attribute, { headers });
+            await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${attribute.id}`, attribute, { headers });
         } else {
             const { id, ...payload } = attribute;
-            await axios.post(`${API_BASE_URL}/admin/variant-attributes`, payload, { headers });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`, payload, { headers });
         }
         alert('Attribute saved successfully!');
         await fetchAdminData();
@@ -762,10 +764,10 @@ export function App(): React.ReactElement {
         const token = localStorage.getItem('zaina-authToken');
         const isUpdating = item.id && isMongoDbId(item.id);
         if (isUpdating) {
-            await axios.put(`${API_BASE_URL}/admin/content/${endpoint}/${item.id}`, item, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}/${item.id}`, item, { headers: { Authorization: `Bearer ${token}` } });
         } else {
             const { id, ...payload } = item;
-            await axios.post(`${API_BASE_URL}/admin/content/${endpoint}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}`, payload, { headers: { Authorization: `Bearer ${token}` } });
         }
         alert(`${itemType} saved successfully!`);
         await fetchInitialData();
@@ -778,7 +780,7 @@ export function App(): React.ReactElement {
   const deleteCmsHandler = (endpoint: string, itemType: string) => async (itemId: string) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.delete(`${API_BASE_URL}/admin/content/${endpoint}/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
         alert(`${itemType} deleted successfully!`);
         await fetchInitialData();
         if (userRole === 'admin') await fetchAdminData();
@@ -793,10 +795,10 @@ export function App(): React.ReactElement {
             const token = localStorage.getItem('zaina-authToken');
             const isUpdating = item.id && isMongoDbId(item.id);
             if (isUpdating) {
-                await axios.put(`${API_BASE_URL}/admin/${endpoint}/${item.id}`, item, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/${endpoint}/${item.id}`, item, { headers: { Authorization: `Bearer ${token}` } });
             } else {
                 const { id, ...payload } = item;
-                await axios.post(`${API_BASE_URL}/admin/${endpoint}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/${endpoint}`, payload, { headers: { Authorization: `Bearer ${token}` } });
             }
             alert(`${itemType} saved successfully!`);
             await fetchInitialData();
@@ -812,7 +814,7 @@ export function App(): React.ReactElement {
         if (!window.confirm(`Are you sure you want to delete this ${itemType.toLowerCase()}? This action cannot be undone.`)) return false;
         try {
             const token = localStorage.getItem('zaina-authToken');
-            await axios.delete(`${API_BASE_URL}/admin/${endpoint}/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/${endpoint}/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
             alert(`${itemType} deleted successfully!`);
             await fetchInitialData();
             if (userRole === 'admin') await fetchAdminData();
@@ -836,10 +838,10 @@ export function App(): React.ReactElement {
           const token = localStorage.getItem('zaina-authToken');
           const isUpdating = coupon.id && isMongoDbId(coupon.id);
           if (isUpdating) {
-              await axios.put(`${API_BASE_URL}/admin/coupons/${coupon.id}`, coupon, { headers: { Authorization: `Bearer ${token}` } });
+              await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/coupons/${coupon.id}`, coupon, { headers: { Authorization: `Bearer ${token}` } });
           } else {
               const { id, ...payload } = coupon;
-              await axios.post(`${API_BASE_URL}/admin/coupons`, payload, { headers: { Authorization: `Bearer ${token}` } });
+              await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/coupons`, payload, { headers: { Authorization: `Bearer ${token}` } });
           }
           alert('Coupon saved successfully!');
           await fetchAdminData();
@@ -854,7 +856,7 @@ export function App(): React.ReactElement {
       if (!window.confirm("Are you sure you want to delete this coupon?")) return false;
       try {
           const token = localStorage.getItem('zaina-authToken');
-          await axios.delete(`${API_BASE_URL}/admin/coupons/${couponId}`, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/coupons/${couponId}`, { headers: { Authorization: `Bearer ${token}` } });
           alert('Coupon deleted.');
           await fetchAdminData();
           return true;
@@ -868,7 +870,7 @@ export function App(): React.ReactElement {
       for (const file of files) {
           try {
               const token = localStorage.getItem('zaina-authToken');
-              const presignedRes = await axios.get(`${API_BASE_URL}/media/presigned-url`, {
+              const presignedRes = await axios.get(`https://zaina-collection-backend.vercel.app/api/media/presigned-url`, {
                   params: { fileName: file.name, fileType: file.type },
                   headers: { Authorization: `Bearer ${token}` }
               });
@@ -877,7 +879,7 @@ export function App(): React.ReactElement {
               
               await axios.put(uploadUrl, file, { headers: { 'Content-Type': file.type } });
               
-              await axios.post(`${API_BASE_URL}/admin/media`, {
+              await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/media`, {
                   name: file.name,
                   url: fileUrl,
                   size: file.size,
@@ -898,7 +900,7 @@ export function App(): React.ReactElement {
       // This would also need a backend endpoint to delete from GCS
       try {
           const token = localStorage.getItem('zaina-authToken');
-          await axios.delete(`${API_BASE_URL}/admin/media/${fileId}`, { headers: { Authorization: `Bearer ${token}` } });
+          await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/media/${fileId}`, { headers: { Authorization: `Bearer ${token}` } });
           alert('Media deleted successfully.');
           await fetchAdminData();
       } catch(err: any) {
