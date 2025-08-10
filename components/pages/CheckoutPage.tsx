@@ -201,7 +201,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
         );
 
         const options = {
-            key: 'YOUR_RAZORPAY_KEY_ID',
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: Math.round(total * 100),
             currency: "INR",
             name: "ZAINA COLLECTION",
