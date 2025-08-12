@@ -54,6 +54,7 @@ export const updateProduct = async (req: AuthRequest, res: Response, next: NextF
             subCategoryName: subCategory,
         };
         delete dataToUpdate.variants;
+        delete dataToUpdate.id;
 
         const updatedProduct = await prisma.$transaction(async (tx) => {
             const product = await tx.product.update({ where: { id }, data: dataToUpdate });
