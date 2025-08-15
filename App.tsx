@@ -84,6 +84,7 @@ import {
   IntegrationsSettings,
 } from "./types";
 import { useScrollAnimation } from "./hooks/useScrollAnimation";
+import PromotionBanner from "./components/PromotionBanner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -1049,28 +1050,71 @@ export function App(): React.ReactElement {
     }
   };
 
-  const onSaveVariantAttribute = async (attribute: VariantAttribute) => {
+  // const onSaveVariantAttribute = async (attribute: VariantAttribute) => {
+  //   try {
+  //     const token = localStorage.getItem("zaina-authToken");
+  //     const headers = { Authorization: `Bearer ${token}` };
+
+  //     const isUpdating = attribute.id && isMongoDbId(attribute.id);
+
+  //     if (isUpdating) {
+  //       await axios.put(
+  //         `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${attribute.id}`,
+  //         attribute,
+  //         { headers }
+  //       );
+  //     } else {
+  //       const { id, ...payload } = attribute;
+  //       await axios.post(
+  //         `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`,
+  //         payload,
+  //         { headers }
+  //       );
+  //     }
+  //     alert("Attribute saved successfully!");
+  //     await fetchAdminData();
+  //   } catch (err: any) {
+  //     console.error(
+  //       "Error saving attribute:",
+  //       err.response?.data || err.message
+  //     );
+  //     alert(
+  //       "Failed to save attribute. " +
+  //         (err.response?.data?.message || "Please check console.")
+  //     );
+  //   }
+  // };
+
+  // helper: detect real Mongo ObjectId (24 hex chars)
+  const isMongoId = (v?: string) => !!v && /^[a-f0-9]{24}$/i.test(v);
+
+  const onSaveVariantAttribute = async (
+    attribute: Partial<VariantAttribute>
+  ) => {
     try {
       const token = localStorage.getItem("zaina-authToken");
       const headers = { Authorization: `Bearer ${token}` };
 
-      const isUpdating = attribute.id && isMongoDbId(attribute.id);
+      // never send id in the body
+      const { id, ...payload } = attribute;
 
-      if (isUpdating) {
+      if (isMongoId(id)) {
+        // UPDATE
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${attribute.id}`,
-          attribute,
+          `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${id}`,
+          payload, // { name, values }
           { headers }
         );
       } else {
-        const { id, ...payload } = attribute;
+        // CREATE
         await axios.post(
           `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`,
-          payload,
+          payload, // { name, values }
           { headers }
         );
       }
-      alert("Attribute saved successfully!");
+
+      // refresh local data (or optimistically update state if you prefer)
       await fetchAdminData();
     } catch (err: any) {
       console.error(
@@ -1078,10 +1122,49 @@ export function App(): React.ReactElement {
         err.response?.data || err.message
       );
       alert(
-        "Failed to save attribute. " +
-          (err.response?.data?.message || "Please check console.")
+        "Failed to save attribute: " +
+          (err.response?.data?.message || err.message)
       );
     }
+  };
+
+  const onAddValueToAttribute = async (
+    attributeId: string,
+    rawValue: string
+  ) => {
+    const value = rawValue.trim();
+    if (!value) return;
+
+    const attr = variantAttributes.find((a) => a.id === attributeId);
+    if (!attr) return;
+
+    if (attr.values.includes(value)) {
+      alert("That value already exists for this attribute.");
+      return;
+    }
+
+    await onSaveVariantAttribute({
+      id: attributeId,
+      name: attr.name,
+      values: [...attr.values, value],
+    });
+  };
+
+  const onDeleteValueFromAttribute = async (
+    attributeId: string,
+    valueToRemove: string
+  ) => {
+    const attr = variantAttributes.find((a) => a.id === attributeId);
+    if (!attr) return;
+
+    const nextValues = attr.values.filter((v) => v !== valueToRemove);
+    if (nextValues.length === attr.values.length) return;
+
+    await onSaveVariantAttribute({
+      id: attributeId,
+      name: attr.name,
+      values: nextValues,
+    });
   };
 
   const createCmsHandler =
@@ -1348,6 +1431,7 @@ export function App(): React.ReactElement {
               onToggleCompare={toggleCompare}
               isProductInCompare={isProductInCompare}
             />
+            <PromotionBanner />
             <ShopByOccasion
               occasions={occasions}
               onOccasionSelect={(name) =>
@@ -1502,7 +1586,32 @@ export function App(): React.ReactElement {
             onSaveProduct={onSaveProduct}
             onSaveCategory={onSaveCategory}
             onSaveVariantAttribute={onSaveVariantAttribute}
-            onDeleteCategory={() => {}}
+            onDeleteCategory={async (id: string) => {
+              if (
+                !window.confirm(
+                  "Are you sure you want to delete this category?"
+                )
+              )
+                return;
+
+              try {
+                const token = localStorage.getItem("zaina-authToken");
+                await axios.delete(
+                  `https://zaina-collection-backend.vercel.app/api/admin/categories/${id}`,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                // Remove from local state
+                setCategories((prev) => prev.filter((cat) => cat.id !== id));
+
+                alert("Category deleted successfully.");
+              } catch (err: any) {
+                alert(
+                  "Failed to delete category: " +
+                    (err.response?.data?.message || err.message)
+                );
+              }
+            }}
             onDeleteVariantAttribute={async (id: string) => {
               if (
                 !window.confirm(
@@ -1531,8 +1640,8 @@ export function App(): React.ReactElement {
                 );
               }
             }}
-            onAddValueToAttribute={() => {}}
-            onDeleteValueFromAttribute={() => {}}
+            onAddValueToAttribute={onAddValueToAttribute}
+            onDeleteValueFromAttribute={onDeleteValueFromAttribute}
             onSaveCoupon={onSaveCoupon}
             onDeleteCoupon={onDeleteCoupon}
             onSaveHeroSlide={createCmsHandler("hero-slides", "Hero Slide")}
