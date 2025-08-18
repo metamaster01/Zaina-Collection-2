@@ -250,7 +250,10 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   }
 
   return (
-    <section className="relative h-[80vh] md:h-screen w-full overflow-hidden group/hero" aria-label="Hero Showcase">
+    <section
+      className="relative min-h-[60vh] h-[70vh] md:h-screen w-full overflow-hidden group/hero"
+      aria-label="Hero Showcase"
+    >
       <Swiper
         modules={[Autoplay, EffectFade, Navigation]}
         spaceBetween={0}
@@ -281,7 +284,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                 <img
                   src={slide.imageUrl || "/placeholder.svg"}
                   alt={slide.title || `Hero slide ${index + 1}`}
-                  className="w-full h-full object-fit"
+                  className="w-full h-full object-cover object-center md:object-right"
                   loading={index === 0 ? "eager" : "lazy"}
                 />
                 <div className="absolute inset-0 bg-black/10"></div>
@@ -292,11 +295,13 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
               </div>
             )}
 
-            <div className="absolute inset-0 z-10 flex flex-col justify-center items-start p-8 sm:p-12 md:p-16 lg:p-24">
-              <div className="w-full max-w-2xl">
+            <div className="absolute inset-0 z-10 flex flex-col justify-center md:justify-center items-start">
+              <div className="md:hidden absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-white/95 via-white/90 to-transparent"></div>
+
+              <div className="relative w-full max-w-2xl px-6 sm:px-8 md:px-16 lg:px-24 pb-8 md:pb-0">
                 {slide.title && (
                   <h3
-                    className={`text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 transition-all duration-700 ease-out 
+                    className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium text-black mb-2 md:mb-4 transition-all duration-700 ease-out 
                                      ${activeIndex === index ? "opacity-100 translate-y-0 delay-[200ms]" : "opacity-0 translate-y-5"}`}
                   >
                     {slide.title}
@@ -305,7 +310,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
                 {slide.caption && (
                   <h1
-                    className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-8 md:mb-12 leading-tight transition-all duration-700 ease-out 
+                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-4 md:mb-8 leading-tight transition-all duration-700 ease-out 
                                       ${activeIndex === index ? "opacity-100 translate-y-0 delay-[400ms]" : "opacity-0 translate-y-5"}`}
                   >
                     {slide.caption}
@@ -316,18 +321,17 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                   <a
                     href={slide.ctaLink}
                     onClick={(e) => handleCtaClick(e, slide.ctaLink)}
-                    className={`inline-block bg-transparent text-black font-semibold py-4 px-8 md:py-5 md:px-12 rounded-lg border-2 border-black
-                                    hover:bg-black hover:text-white transform hover:scale-105 transition-all duration-300 text-lg md:text-xl
+                    className={`inline-block bg-transparent text-black font-semibold py-3 px-6 md:py-4 md:px-8 rounded-lg border-2 border-black
+                                    hover:bg-black hover:text-white transform hover:scale-105 transition-all duration-300 text-base md:text-lg
                                     ${activeIndex === index ? "opacity-100 translate-y-0 delay-[600ms]" : "opacity-0 translate-y-5"}`}
                   >
                     {slide.ctaText}
                   </a>
                 )}
 
-                {/* Rating text */}
                 {slide.ratingText && (
                   <p
-                    className={`mt-6 text-sm text-black/70 tracking-wider transition-all duration-700 ease-out
+                    className={`mt-4 md:mt-6 text-xs md:text-sm text-black/70 tracking-wider transition-all duration-700 ease-out
                                        ${activeIndex === index ? "opacity-100 translate-y-0 delay-[800ms]" : "opacity-0 translate-y-5"}`}
                   >
                     {slide.ratingText}
@@ -339,7 +343,6 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
         ))}
       </Swiper>
 
-      {/* Custom Navigation Arrows */}
       <button
         className="hero-swiper-button-prev swiper-button-prev opacity-0 group-hover/hero:opacity-70 hover:!opacity-100 !left-4 md:!left-6 lg:!left-8 z-20 !text-black"
         aria-label="Previous slide"
@@ -350,7 +353,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
       ></button>
 
       {activeSlides.length > 1 && (
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2 items-center">
+        <div className="absolute bottom-4 md:bottom-10 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2 items-center">
           {activeSlides.map((slide, index) => (
             <button
               key={`nav-${slide.id}`}
@@ -359,7 +362,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                 setAutoplayProgress(0)
                 setTimeout(() => setAutoplayProgress(1), 50)
               }}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ease-out focus:outline-none
+              className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 ease-out focus:outline-none
                           ${activeIndex === index ? "bg-black scale-125" : "bg-black/40 hover:bg-black/60"}`}
               aria-label={`Go to slide ${index + 1}: ${slide.title || `Slide ${index + 1}`}`}
               aria-current={activeIndex === index ? "true" : "false"}

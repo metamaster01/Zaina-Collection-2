@@ -85,6 +85,7 @@ import {
 } from "./types";
 import { useScrollAnimation } from "./hooks/useScrollAnimation";
 import PromotionBanner from "./components/PromotionBanner";
+import ShopByCategories from "./components/ShopByCategories";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -1404,6 +1405,7 @@ export function App(): React.ReactElement {
         return (
           <>
             <HeroSlider slides={heroSlides} />
+            <ShopByCategories />
             <TrendingProductStrip
               title="New Arrivals"
               products={products.filter((p) => p.isNew).slice(0, 10)}

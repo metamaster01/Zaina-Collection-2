@@ -125,7 +125,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <section
-      className={`py-12 md:py-16 ${sectionBgColor} relative overflow-hidden px-16`}
+      className={`py-12 md:py-16 ${sectionBgColor} relative overflow-hidden px-10 sm:px-10 md:px-10 lg:px-16`}
       id={title.toLowerCase().replace(/\s+/g, "-")}
     >
       <div className="absolute top-8 left-8 w-20 h-20 opacity-15">

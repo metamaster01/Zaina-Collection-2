@@ -168,7 +168,7 @@ const TrendingProductStrip: React.FC<TrendingProductStripProps> = ({
   }
 
   return (
-    <section className="py-12 md:py-16 bg-white relative overflow-hidden px-16">
+    <section className="py-12 md:py-16 bg-white relative overflow-hidden px-10 sm:px-10 md:px-10 lg:px-16">
       <div className="absolute top-8 right-8 w-24 h-24 opacity-20">
         <svg viewBox="0 0 100 100" className="w-full h-full text-yellow-300">
           <path d="M50 0 L60 35 L100 35 L72 57 L82 92 L50 70 L18 92 L28 57 L0 35 L40 35 Z" fill="currentColor" />

@@ -533,7 +533,7 @@ const Header: React.FC<HeaderProps> = ({
     <>
       <header
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 flex flex-col transition-shadow duration-300 ease-in-out"
+        className="fixed top-0 left-0 right-0 z-50 flex flex-col transition-shadow duration-300 ease-in-out overflow-hidden"
       >
 
         <div

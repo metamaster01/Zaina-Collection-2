@@ -231,6 +231,7 @@ const AdminAddProductSection: React.FC<AdminAddProductSectionProps> = ({ product
             alert('Please fix all errors before saving.');
             return;
         }
+        console.log(product)
         
         onSave({...product, variants} as Product);
     };

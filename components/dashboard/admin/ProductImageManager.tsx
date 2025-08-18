@@ -27,29 +27,32 @@ const ProductImageManager: React.FC<ProductImageManagerProps> = ({
     setImageUrls(initialImageUrls);
   }, [initialImageUrls]);
 
-  const handleFiles = (newFiles: File[]) => {
-    setError(null);
-    if (imageUrls.length + newFiles.length > 8) {
-      setError("You can upload a maximum of 8 images per product.");
-      return;
-    }
+const handleFiles = async (newFiles: File[]) => {
+  setError(null);
+  if (imageUrls.length + newFiles.length > 8) {
+    setError("You can upload a maximum of 8 images per product.");
+    return;
+  }
 
-    onUploadMedia(newFiles);
+  try {
+    // Upload to GCP first
+    await onUploadMedia(newFiles);
 
-    const newUrlPromises = Array.from(newFiles).map(file => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    });
+    // Instead of base64 previews, use the permanent fileUrls
+    // Assume onUploadMedia updates your mediaLibrary with fileUrls
+    const uploadedUrls = newFiles.map(file => {
+      const match = mediaLibrary.find(m => m.name === file.name);
+      return match?.url;
+    }).filter(Boolean) as string[];
 
-    Promise.all(newUrlPromises).then(newUrls => {
-      const updatedUrls = [...imageUrls, ...newUrls];
-      setImageUrls(updatedUrls);
-      onImageChange(updatedUrls);
-    });
-  };
+    const updatedUrls = [...imageUrls, ...uploadedUrls];
+    setImageUrls(updatedUrls);
+    onImageChange(updatedUrls);
+  } catch (err) {
+    setError("Failed to upload images. Please try again.");
+  }
+};
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
