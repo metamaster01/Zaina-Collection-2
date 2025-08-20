@@ -272,42 +272,81 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = (props) => {
       case 'users_history': return <AdminSecuritySection />;
       
       // Platform - Settings
+      // case 'settings_store':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminStoreSettingsSection
+      //     storeSettings={siteSettings.storeSettings}
+      //     onSaveStoreSettings={(s: StoreSettings) => onSaveSiteSettings({ ...siteSettings, storeSettings: s })}
+      //   />;
+      // case 'settings_header':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminHeaderManagerSection
+      //       headerLinks={siteSettings.headerLinks}
+      //       onSaveHeaderLinks={(links: NavLinkItem[]) => onSaveSiteSettings({ ...siteSettings, headerLinks: links })}
+      //   />
+      // case 'settings_footer':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminFooterManagerSection
+      //       footerSettings={siteSettings.footerSettings}
+      //       onSaveFooterSettings={(fs: FooterSettings) => onSaveSiteSettings({ ...siteSettings, footerSettings: fs })}
+      //   />
+      // case 'settings_seo':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminSeoSettingsSection
+      //       seoSettings={siteSettings.seoSettings}
+      //       onSaveSeoSettings={(ss: SeoSettings) => onSaveSiteSettings({ ...siteSettings, seoSettings: ss })}
+      //   />
+      // case 'settings_theme':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminThemeSettingsSection
+      //       themeSettings={siteSettings.themeSettings}
+      //       onSaveThemeSettings={(ts: ThemeSettings) => onSaveSiteSettings({ ...siteSettings, themeSettings: ts })}
+      //   />;
+      // case 'settings_integrations':
+      //   if (!siteSettings) return <p>Loading settings...</p>;
+      //   return <AdminIntegrationsSection
+      //       integrations={siteSettings.integrations}
+      //       onSaveIntegrations={(i: IntegrationsSettings) => onSaveSiteSettings({ ...siteSettings, integrations: i })}
+      //   />;
+
+            // Platform - Settings
       case 'settings_store':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminStoreSettingsSection
           storeSettings={siteSettings.storeSettings}
-          onSaveStoreSettings={(s: StoreSettings) => onSaveSiteSettings({ ...siteSettings, storeSettings: s })}
+          onSaveStoreSettings={(s: StoreSettings) => onSaveSiteSettings({ storeSettings: s })}
         />;
       case 'settings_header':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminHeaderManagerSection
             headerLinks={siteSettings.headerLinks}
-            onSaveHeaderLinks={(links: NavLinkItem[]) => onSaveSiteSettings({ ...siteSettings, headerLinks: links })}
-        />
+            onSaveHeaderLinks={(links: NavLinkItem[]) => onSaveSiteSettings({ headerLinks: links })}
+        />;
       case 'settings_footer':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminFooterManagerSection
             footerSettings={siteSettings.footerSettings}
-            onSaveFooterSettings={(fs: FooterSettings) => onSaveSiteSettings({ ...siteSettings, footerSettings: fs })}
-        />
+            onSaveFooterSettings={(fs: FooterSettings) => onSaveSiteSettings({ footerSettings: fs })}
+        />;
       case 'settings_seo':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminSeoSettingsSection
             seoSettings={siteSettings.seoSettings}
-            onSaveSeoSettings={(ss: SeoSettings) => onSaveSiteSettings({ ...siteSettings, seoSettings: ss })}
-        />
+            onSaveSeoSettings={(ss: SeoSettings) => onSaveSiteSettings({ seoSettings: ss })}
+        />;
       case 'settings_theme':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminThemeSettingsSection
             themeSettings={siteSettings.themeSettings}
-            onSaveThemeSettings={(ts: ThemeSettings) => onSaveSiteSettings({ ...siteSettings, themeSettings: ts })}
+            onSaveThemeSettings={(ts: ThemeSettings) => onSaveSiteSettings({ themeSettings: ts })}
         />;
       case 'settings_integrations':
         if (!siteSettings) return <p>Loading settings...</p>;
         return <AdminIntegrationsSection
             integrations={siteSettings.integrations}
-            onSaveIntegrations={(i: IntegrationsSettings) => onSaveSiteSettings({ ...siteSettings, integrations: i })}
+            onSaveIntegrations={(i: IntegrationsSettings) => onSaveSiteSettings({ integrations: i })}
         />;
+
 
       case 'admin_profile': return <AdminProfileSection user={currentUser} />;
       

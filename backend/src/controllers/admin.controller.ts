@@ -677,20 +677,42 @@ export const getSiteSettings = async (req: AuthRequest, res: Response, next: Nex
     } catch (error) { next(error); }
 };
 
-export const updateSiteSettings = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const settingsData = req.body;
-    try {
-        const settings = await prisma.siteSettings.upsert({
-            where: { singleton: 'global_settings' },
-            update: settingsData,
-            create: { ...settingsData, singleton: 'global_settings' }
-        });
-        await logAdminAction(req, 'Updated site settings');
-        res.json(settings);
-    } catch (error) {
-        next(error);
-    }
+// export const updateSiteSettings = async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     const settingsData = req.body;
+//     try {
+//         const settings = await prisma.siteSettings.upsert({
+//             where: { singleton: 'global_settings' },
+//             update: settingsData,
+//             create: { ...settingsData, singleton: 'global_settings' }
+//         });
+//         await logAdminAction(req, 'Updated site settings');
+//         res.json(settings);
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
+export const updateSiteSettings = async (req: AuthRequest, res: Response) => {
+  try {
+    // destructure id out, since we don't want to pass it to update/create
+    const { id, ...settingsData } = req.body;
+
+    const settings = await prisma.siteSettings.upsert({
+      where: { singleton: "global_settings" },
+      update: settingsData, // no id here
+      create: {
+        ...settingsData,
+        singleton: "global_settings", // ensure singleton is set
+      },
+    });
+
+    res.json(settings);
+  } catch (error) {
+    console.error("Failed to update site settings:", error);
+    res.status(500).json({ message: "Failed to update site settings", error });
+  }
 };
+
 
 // Admin Dashboard
 export const getDashboardData = async (req: AuthRequest, res: Response, next: NextFunction) => {

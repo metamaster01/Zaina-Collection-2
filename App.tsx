@@ -1397,6 +1397,24 @@ export function App(): React.ReactElement {
     }
   };
 
+
+  const onSaveSiteSettings = async (settings: SiteSettingsBundle): Promise<boolean> => {
+  try {
+    const token = localStorage.getItem("zaina-authToken");
+    await axios.put(
+      `https://zaina-collection-backend.vercel.app/api/admin/settings/site`,
+      settings,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setSiteSettings(settings); // update local state
+    return true;
+  } catch (err) {
+    console.error("Failed to save site settings", err);
+    return false;
+  }
+};
+
+
   // --- RENDER LOGIC ---
 
   const renderPage = () => {
@@ -1678,7 +1696,7 @@ export function App(): React.ReactElement {
             onDeleteFaq={onDeleteFaq}
             onSaveReview={() => {}}
             onDeleteReview={() => {}}
-            onSaveSiteSettings={async () => true}
+            onSaveSiteSettings={onSaveSiteSettings}
             onUpdateStock={() => {}}
             onUpdateOrderStatus={() => {}}
             onSaveAdminUser={onSaveAdminUser}
