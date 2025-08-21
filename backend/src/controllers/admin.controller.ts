@@ -160,6 +160,52 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response, next: N
     }
 };
 
+// controllers/adminOrders.ts
+export const getOrderById = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, email: true } },
+        items: {
+          include: {
+            product: { select: { name: true, sku: true, imageUrl: true } },
+            variant: { select: { id: true, attributes: true } }, // optional but handy
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // (Optional) Normalize a “flat” shape for the frontend modal
+    const normalized = {
+      ...order,
+      // shippingAddress is JSON in your model; just pass through
+      items: order.items.map(it => ({
+        id: it.id,
+        quantity: it.quantity,
+        priceAtPurchase: it.priceAtPurchase,
+        // Prefer the stored snapshot (authoritative at purchase time)
+        selectedVariant: { attributes: (it.variantSnapshot as Record<string, any>) ?? {} },
+        // Use the live product for name/sku/image
+        name: it.product?.name ?? '',
+        sku: it.product?.sku ?? '',
+        imageUrl: it.product?.imageUrl ?? '',
+      })),
+    };
+
+    res.json(normalized);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // Customer Controllers
 export const getAllCustomers = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {

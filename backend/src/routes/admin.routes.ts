@@ -1,6 +1,6 @@
 
 import express, { Request, Response } from 'express';
-import { createProduct, deleteProduct, getAllCustomers, getAllOrders, updateOrderStatus, updateProduct, getCoupons, createCoupon, updateCoupon, deleteCoupon, getMediaLibrary, createCategory, updateCategory, deleteCategory, getCategories, createTestimonial, getTestimonials, updateTestimonial, deleteTestimonial, getDashboardData, getAdminChatSessions, getChatMessages, sendAdminMessage, getReviews, updateReview, deleteReview, getFaqs, createFaq, updateFaq, deleteFaq, updateStock, getWishlistAnalytics, toggleCustomerBlock, addMediaFile, deleteMediaFile, getPaymentGateways, updatePaymentGateway, getVariantAttributes, createVariantAttribute, updateVariantAttribute, deleteVariantAttribute, getShippingZones, createShippingZone, updateShippingZone, deleteShippingZone, getShippingProviders, updateShippingProvider, getSiteSettings, updateSiteSettings, updateSupportTicket, getTags, deleteTagFromAllProducts, createAdminUser, updateAdminUser, deleteAdminUser, getNotifications } from '../controllers/admin.controller';
+import { createProduct, deleteProduct, getAllCustomers, getAllOrders, updateOrderStatus, updateProduct, getCoupons, createCoupon, updateCoupon, deleteCoupon, getMediaLibrary, createCategory, updateCategory, deleteCategory, getCategories, createTestimonial, getTestimonials, updateTestimonial, deleteTestimonial, getDashboardData, getAdminChatSessions, getChatMessages, sendAdminMessage, getReviews, updateReview, deleteReview, getFaqs, createFaq, updateFaq, deleteFaq, updateStock, getWishlistAnalytics, toggleCustomerBlock, addMediaFile, deleteMediaFile, getPaymentGateways, updatePaymentGateway, getVariantAttributes, createVariantAttribute, updateVariantAttribute, deleteVariantAttribute, getShippingZones, createShippingZone, updateShippingZone, deleteShippingZone, getShippingProviders, updateShippingProvider, getSiteSettings, updateSiteSettings, updateSupportTicket, getTags, deleteTagFromAllProducts, createAdminUser, updateAdminUser, deleteAdminUser, getNotifications, getOrderById } from '../controllers/admin.controller';
 import { isAdmin, isAuthenticated } from '../middlewares/auth.middleware';
 import * as contentController from '../controllers/admin/content.controller';
 import prisma from '../prisma';
@@ -38,6 +38,7 @@ router.put('/inventory/stock', updateStock);
 // Order Management
 router.get('/orders', getAllOrders);
 router.put('/orders/:id/status', updateOrderStatus);
+router.get('/orders/:id', getOrderById);
 
 // Coupon Management
 router.get('/coupons', getCoupons);
