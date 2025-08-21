@@ -692,26 +692,84 @@ export const getSiteSettings = async (req: AuthRequest, res: Response, next: Nex
 //     }
 // };
 
-export const updateSiteSettings = async (req: AuthRequest, res: Response) => {
-  try {
-    // destructure id out, since we don't want to pass it to update/create
-    const { id, ...settingsData } = req.body;
+// export const updateSiteSettings = async (req: AuthRequest, res: Response) => {
+//   try {
+//     // destructure id out, since we don't want to pass it to update/create
+//     const { id, ...settingsData } = req.body;
 
+//     const settings = await prisma.siteSettings.upsert({
+//       where: { singleton: "global_settings" },
+//       update: settingsData, // no id here
+//       create: {
+//         ...settingsData,
+//         singleton: "global_settings", // ensure singleton is set
+//       },
+//     });
+
+//     res.json(settings);
+//   } catch (error) {
+//     console.error("Failed to update site settings:", error);
+//     res.status(500).json({ message: "Failed to update site settings", error });
+//   }
+// };
+
+
+// controllers/admin.controller.ts
+export const updateSiteSettings = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const newData = req.body;
+
+    // 1. Get existing settings
+    const existing = await prisma.siteSettings.findFirst({
+      where: { singleton: "global_settings" },
+    });
+
+    // 2. Merge existing + new (deep merge)
+    const merged = {
+      ...existing,
+      ...newData,
+      // merge JSON sub-objects individually so they don’t get wiped
+      storeSettings: { 
+        ...(typeof existing?.storeSettings === 'object' && existing?.storeSettings !== null ? existing.storeSettings : {}), 
+        ...(typeof newData.storeSettings === 'object' && newData.storeSettings !== null ? newData.storeSettings : {}) 
+      },
+      seoSettings: { 
+        ...(typeof existing?.seoSettings === 'object' && existing?.seoSettings !== null ? existing.seoSettings : {}), 
+        ...(typeof newData.seoSettings === 'object' && newData.seoSettings !== null ? newData.seoSettings : {}) 
+      },
+      themeSettings: { 
+        ...(typeof existing?.themeSettings === 'object' && existing?.themeSettings !== null ? existing.themeSettings : {}), 
+        ...(typeof newData.themeSettings === 'object' && newData.themeSettings !== null ? newData.themeSettings : {}) 
+      },
+      footerSettings: { 
+        ...(typeof existing?.footerSettings === 'object' && existing?.footerSettings !== null ? existing.footerSettings : {}), 
+        ...(typeof newData.footerSettings === 'object' && newData.footerSettings !== null ? newData.footerSettings : {}) 
+      },
+      integrations: { 
+        ...(typeof existing?.integrations === 'object' && existing?.integrations !== null ? existing.integrations : {}), 
+        ...(typeof newData.integrations === 'object' && newData.integrations !== null ? newData.integrations : {}) 
+      },
+      headerLinks: newData.headerLinks ?? existing?.headerLinks ?? [],
+    };
+
+    // 3. Upsert with safe full object
     const settings = await prisma.siteSettings.upsert({
       where: { singleton: "global_settings" },
-      update: settingsData, // no id here
+      update: merged,
       create: {
-        ...settingsData,
-        singleton: "global_settings", // ensure singleton is set
+        singleton: "global_settings",
+        ...merged,
       },
     });
 
+    await logAdminAction(req, "Updated site settings");
     res.json(settings);
   } catch (error) {
     console.error("Failed to update site settings:", error);
-    res.status(500).json({ message: "Failed to update site settings", error });
+    next(error);
   }
 };
+
 
 
 // Admin Dashboard
