@@ -180,17 +180,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isWishlisted = false,
   onToggleCompare,
   isCompared = false,
-  compact = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false)
 
   const currentImageUrl = isHovered && product.hoverImageUrl ? product.hoverImageUrl : product.imageUrl
 
+  const discount =
+    product.mrp > product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0
+
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest("button")) {
-      return
-    }
-    if (onProductCardClick) {
+    if ((e.target as HTMLElement).closest("button")) return
+    // On mobile, clicking card/image/title will shop now
+    if (window.innerWidth < 768) {
+      onQuickShop(product)
+    } else if (onProductCardClick) {
       onProductCardClick(product)
     }
   }
@@ -200,12 +203,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       className="bg-white rounded-lg overflow-hidden group relative transition-all duration-300 ease-out flex flex-col h-full shadow-sm hover:shadow-lg transform hover:-translate-y-1 border-2 border-dashed border-gray-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      role="group"
-      aria-label={`Product: ${product.name}`}
       onClick={handleCardClick}
-      style={{ cursor: onProductCardClick ? "pointer" : "default" }}
+      style={{ cursor: "pointer" }}
     >
-      <div className="relative aspect-[3/4] overflow-hidden p-6">
+      <div className="relative aspect-[3/4] overflow-hidden p-2 sm:p-6">
         <img
           src={currentImageUrl || "/placeholder.svg"}
           alt={product.name}
@@ -213,6 +214,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
           loading="lazy"
         />
 
+        {/* Discount Badge */}
+        {discount > 0 && (
+          <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md">
+            -{discount}% OFF
+          </span>
+        )}
+
+        {/* Wishlist Button */}
         {onToggleWishlist && (
           <button
             onClick={(e) => {
@@ -229,9 +238,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </button>
         )}
 
+        {/* New / Best Seller */}
         {(product.isNew || product.isBestSeller) && (
           <span
-            className={`absolute top-3 left-3 text-xs font-medium px-3 py-1 rounded-full ${
+            className={`absolute bottom-3 left-3 text-xs font-medium px-3 py-1 rounded-full ${
               product.isBestSeller ? "bg-pink-400 text-white" : "bg-blue-500 text-white"
             }`}
           >
@@ -240,10 +250,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
 
-      <div className="p-4 text-left flex-grow flex flex-col">
-        <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2" title={product.name}>
-          {product.name}
-        </h3>
+      <div className="p-3 sm:p-4 text-left flex-grow flex flex-col">
+        <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
 
         <div className="flex items-center justify-between mt-auto mb-3">
           <div className="flex flex-col">
@@ -256,17 +264,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onQuickShop(product)
-          }}
-          className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2"
-        >
-          <span>Shop Now</span>
-          <img src="/arrow.png" alt="" className="w-4 h-4" />
-        </button>
+        {/* Shop Now button - only on desktop */}
+        <div className="hidden sm:block">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onQuickShop(product)
+            }}
+            className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2"
+          >
+            <span>Shop Now</span>
+            <img src="/arrow.png" alt="" className="w-4 h-4" />
+          </button>
+        </div>
 
+        {/* Hover icons (desktop only) */}
         <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 p-3 flex space-x-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
             onClick={(e) => {

@@ -47,20 +47,33 @@ const AdminOrderDetailModal: React.FC<AdminOrderDetailModalProps> = ({ order, on
         <div>
           <h4 className="font-semibold text-admin-text dark:text-admin-dark-text mb-2">Items Ordered</h4>
           <div className="space-y-3 max-h-60 overflow-y-auto pr-2 border-t border-b py-2 border-gray-200 dark:border-gray-700">
-            {order.items.map((item, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <img src={item.imageUrl} alt={item.name} className="w-16 h-20 object-cover rounded-md" />
-                <div className="flex-grow">
-                  <p className="font-medium text-admin-text dark:text-admin-dark-text">{item.name}</p>
-                  <p className="text-xs text-admin-text-secondary dark:text-dark-admin-text-secondary">SKU: {item.sku}</p>
-                   <p className="text-xs text-admin-text-secondary dark:text-dark-admin-text-secondary capitalize">
-                    {Object.entries(item.selectedVariant.attributes).map(([key, value]) => `${key}: ${value}`).join(' / ')}
-                    {' | '}Qty: {item.quantity}
-                  </p>
-                </div>
-                <p className="font-medium text-sm text-admin-text dark:text-admin-dark-text">₹{(item.priceAtPurchase * item.quantity).toFixed(2)}</p>
-              </div>
-            ))}
+{(order.items ?? []).map((item, index) => {
+  const attrs = (item.selectedVariant?.attributes
+                 ?? item.variantSnapshot  // if you keep raw prisma
+                 ?? {}) as Record<string, any>;
+
+  return (
+    <div key={index} className="flex items-center gap-4">
+      <img src={item.imageUrl ?? item.product?.imageUrl ?? ''} alt={item.name ?? item.product?.name ?? 'Product'} className="w-16 h-20 object-cover rounded-md" />
+      <div className="flex-grow">
+        <p className="font-medium text-admin-text dark:text-admin-dark-text">
+          {item.name ?? item.product?.name ?? '—'}
+        </p>
+        <p className="text-xs text-admin-text-secondary dark:text-dark-admin-text-secondary">
+          SKU: {item.sku ?? item.product?.sku ?? '—'}
+        </p>
+        <p className="text-xs text-admin-text-secondary dark:text-dark-admin-text-secondary capitalize">
+          {Object.entries(attrs).map(([k, v]) => `${k}: ${v}`).join(' / ')}
+          {' | '}Qty: {item.quantity}
+        </p>
+      </div>
+      <p className="font-medium text-sm text-admin-text dark:text-admin-dark-text">
+        ₹{(item.priceAtPurchase * item.quantity).toFixed(2)}
+      </p>
+    </div>
+  );
+})}
+
           </div>
         </div>
 

@@ -39,6 +39,7 @@ import AdminDashboardPage from "./components/pages/AdminDashboardPage";
 import BlogIndexPage from "./components/pages/BlogIndexPage";
 import BlogPostPage from "./components/pages/BlogPostPage";
 import NotFoundPage from "./components/pages/NotFoundPage";
+import { Loader2 } from "lucide-react";
 
 // Constants and Types
 import { ZAINA_BRAND_NAME, INITIAL_FOOTER_SETTINGS } from "./constants";
@@ -1397,23 +1398,54 @@ export function App(): React.ReactElement {
     }
   };
 
+  const onSaveSiteSettings = async (
+    settings: SiteSettingsBundle
+  ): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem("zaina-authToken");
+      await axios.put(
+        `https://zaina-collection-backend.vercel.app/api/admin/settings/site`,
+        settings,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSiteSettings(settings); // update local state
+      return true;
+    } catch (err) {
+      console.error("Failed to save site settings", err);
+      return false;
+    }
+  };
 
-  const onSaveSiteSettings = async (settings: SiteSettingsBundle): Promise<boolean> => {
-  try {
-    const token = localStorage.getItem("zaina-authToken");
-    await axios.put(
-      `https://zaina-collection-backend.vercel.app/api/admin/settings/site`,
-      settings,
-      { headers: { Authorization: `Bearer ${token}` } }
+  const onUpdateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    // Optimistic UI update
+    setAllOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
     );
-    setSiteSettings(settings); // update local state
-    return true;
-  } catch (err) {
-    console.error("Failed to save site settings", err);
-    return false;
-  }
-};
 
+    try {
+      const token = localStorage.getItem("zaina-authToken");
+      const res = await axios.put(
+        `https://zaina-collection-backend.vercel.app/api/admin/orders/${orderId}/status`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update state with the response (in case backend adds extra fields)
+      const updatedOrder = res.data;
+      setAllOrders((prev) =>
+        prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
+      );
+    } catch (err) {
+      console.error("Failed to update order status", err);
+
+      // Revert on failure
+      setAllOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: o.status } : o))
+      );
+
+      alert("Failed to update order status. Please try again.");
+    }
+  };
 
   // --- RENDER LOGIC ---
 
@@ -1698,7 +1730,7 @@ export function App(): React.ReactElement {
             onDeleteReview={() => {}}
             onSaveSiteSettings={onSaveSiteSettings}
             onUpdateStock={() => {}}
-            onUpdateOrderStatus={() => {}}
+            onUpdateOrderStatus={onUpdateOrderStatus}
             onSaveAdminUser={onSaveAdminUser}
             onDeleteAdminUser={onDeleteAdminUser}
             onToggleCustomerBlock={() => {}}
@@ -1729,13 +1761,27 @@ export function App(): React.ReactElement {
     }
   };
 
-  if (!siteSettings) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-zaina-sky-blue-light">
-        Loading Zaina Collection...
+if (!siteSettings) {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
+      <div className="relative flex items-center justify-center">
+        {/* Spinning border */}
+        <Loader2 className="w-20 h-20 text-blue-400 animate-spin absolute" />
+
+        {/* Logo in center */}
+        <img
+          src="/logo2.png"
+          alt="Zaina Collection Logo"
+          className="w-16 h-16 rounded-full object-cover"
+        />
       </div>
-    );
-  }
+      <p className="mt-4 text-gray-700 font-medium text-lg">
+        Loading Zaina Collection...
+      </p>
+    </div>
+  );
+}
+
 
   const isHomePage = currentPage === "home";
   const pageContainerClass = `page-content ${isHomePage ? "is-home" : ""}`;

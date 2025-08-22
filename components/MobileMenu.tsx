@@ -290,12 +290,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             <a href="/" onClick={handleLogoClick} className={`cursor-pointer`}>
               <img src="/logo.png" alt={ZAINA_BRAND_NAME} className="h-8 w-auto object-contain" />
             </a>
+            
             <button onClick={onClose} className={`text-gray-600 p-2`} aria-label="Close menu">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
+
+          <a
+              href="#"
+              onClick={(e) => handleLinkClick(e, "cart")}
+              className={`flex items-center py-2.5 px-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-base`}
+            >
+              <ShoppingCartIcon className={`${iconSize} text-gray-500`} />
+            </a>
 
           <nav className="flex-grow px-2 py-4 space-y-1">
             {sortedNavLinks.map((link) => (

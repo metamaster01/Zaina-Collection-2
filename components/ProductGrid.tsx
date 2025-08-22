@@ -78,7 +78,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Product } from "../types"
 import ProductCard from "./ProductCard"
 
@@ -110,7 +110,19 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   isProductInCompare,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const displayProducts = isExpanded ? products : products.slice(0, 3)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  // Track screen size
+  useEffect(() => {
+    const checkScreen = () => setIsDesktop(window.innerWidth >= 1024) // Tailwind lg breakpoint
+    checkScreen()
+    window.addEventListener("resize", checkScreen)
+    return () => window.removeEventListener("resize", checkScreen)
+  }, [])
+
+  // Initial slice logic: 6 for desktop, 3 for mobile
+  const initialCount = isDesktop ? 6 : 6
+  const displayProducts = isExpanded ? products : products.slice(0, initialCount)
 
   if (!products) {
     return (
@@ -125,38 +137,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <section
-      className={`py-12 md:py-16 ${sectionBgColor} relative overflow-hidden px-10 sm:px-10 md:px-10 lg:px-16`}
+      className={`py-12 md:py-16 ${sectionBgColor} relative overflow-hidden px-4 sm:px-4 md:px-10 lg:px-16`}
       id={title.toLowerCase().replace(/\s+/g, "-")}
     >
-      <div className="absolute top-8 left-8 w-20 h-20 opacity-15">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-yellow-400">
-          <path d="M50 0 L60 35 L100 35 L72 57 L82 92 L50 70 L18 92 L28 57 L0 35 L40 35 Z" fill="currentColor" />
-        </svg>
-      </div>
-      <div className="absolute bottom-8 right-8 w-16 h-16 opacity-20">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-orange-300">
-          <circle cx="50" cy="50" r="15" fill="currentColor" />
-          <path
-            d="M50 15 L53 35 L50 30 L47 35 Z M85 50 L65 53 L70 50 L65 47 Z M50 85 L47 65 L50 70 L53 65 Z M15 50 L35 47 L30 50 L35 53 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         {title && (
           <div className="text-center mb-8">
             <p className="text-sm text-gray-600 mb-1">Trending Now</p>
             <h2 className={`text-3xl md:text-4xl font-bold ${titleColor} mb-2`}>{title}</h2>
-            <p className="text-gray-600 text-sm">Our finest loved styles that'll become a staple in your wardrobe</p>
-
-            <div className="flex justify-center mt-4 mb-8">
-              <div className="flex space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                ))}
-              </div>
-            </div>
+            <p className="text-gray-600 text-sm">
+              Our finest loved styles that'll become a staple in your wardrobe
+            </p>
           </div>
         )}
 
@@ -166,7 +157,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
         {products.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* grid stays same, just product count changes */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
               {displayProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -182,7 +174,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
               ))}
             </div>
 
-            {products.length > 3 && (
+            {products.length > initialCount && (
               <div className="text-center mt-8">
                 {!isExpanded ? (
                   <button
