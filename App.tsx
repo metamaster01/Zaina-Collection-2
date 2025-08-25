@@ -289,6 +289,15 @@ export function App(): React.ReactElement {
   const [compareList, setCompareList] = useState<Product[]>([]);
   const [isDarkMode, setIsDarkMode] = useStickyState(false, "zaina-darkMode");
 
+
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/logo2.png"; // Preload your logo
+    img.onload = () => setImageLoaded(true);
+  }, []);
+
   // --- HOOKS & EFFECTS ---
   useScrollAnimation(currentPage);
 
@@ -1766,14 +1775,18 @@ if (!siteSettings) {
     <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
       <div className="relative flex items-center justify-center">
         {/* Spinning border */}
-        <Loader2 className="w-20 h-20 text-blue-400 animate-spin absolute" />
+        <Loader2 className="absolute w-24 h-24 animate-spin text-zaina-blue" />
 
-        {/* Logo in center */}
-        <img
-          src="/logo2.png"
-          alt="Zaina Collection Logo"
-          className="w-16 h-16 rounded-full object-cover"
-        />
+        {/* Show logo only when loaded */}
+        {imageLoaded ? (
+          <img
+            src="/logo2.png"
+            alt="Zaina Logo"
+            className="w-16 h-16 rounded-full shadow-lg"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-gray-200" /> // placeholder circle
+        )}
       </div>
       <p className="mt-4 text-gray-700 font-medium text-lg">
         Loading Zaina Collection...

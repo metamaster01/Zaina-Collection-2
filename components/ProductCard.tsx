@@ -188,12 +188,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const discount =
     product.mrp > product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0
 
+  // Only desktop uses card click for product detail
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("button")) return
-    // On mobile, clicking card/image/title will shop now
-    if (window.innerWidth < 768) {
-      onQuickShop(product)
-    } else if (onProductCardClick) {
+    if (window.innerWidth >= 768 && onProductCardClick) {
       onProductCardClick(product)
     }
   }
@@ -206,7 +204,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleCardClick}
       style={{ cursor: "pointer" }}
     >
-      <div className="relative aspect-[3/4] overflow-hidden p-2 sm:p-6">
+      {/* Image section */}
+      <div
+        className="relative aspect-[3/4] overflow-hidden p-2 sm:p-6"
+        onClick={(e) => {
+          e.stopPropagation()
+            onProductCardClick?.(product) // mobile → details
+        }}
+      >
         <img
           src={currentImageUrl || "/placeholder.svg"}
           alt={product.name}
@@ -221,7 +226,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </span>
         )}
 
-        {/* Wishlist Button */}
+        {/* Wishlist */}
         {onToggleWishlist && (
           <button
             onClick={(e) => {
@@ -250,8 +255,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
 
+      {/* Content */}
       <div className="p-3 sm:p-4 text-left flex-grow flex flex-col">
-        <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
+        {/* Title → mobile triggers add-to-cart */}
+        <h3
+          className="text-sm font-medium text-gray-900 mb-2 line-clamp-2"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (window.innerWidth < 768) {
+              onQuickShop(product)
+            }
+          }}
+        >
+          {product.name}
+        </h3>
 
         <div className="flex items-center justify-between mt-auto mb-3">
           <div className="flex flex-col">
@@ -264,7 +281,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </div>
 
-        {/* Shop Now button - only on desktop */}
+        {/* Shop Now button - desktop only */}
         <div className="hidden sm:block">
           <button
             onClick={(e) => {
@@ -278,7 +295,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </button>
         </div>
 
-        {/* Hover icons (desktop only) */}
+        {/* Hover icons - desktop only */}
         <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 p-3 flex space-x-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
             onClick={(e) => {

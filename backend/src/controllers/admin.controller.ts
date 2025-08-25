@@ -44,9 +44,11 @@ export const createProduct = async (req: AuthRequest, res: Response, next: NextF
 export const updateProduct = async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { variants, category, subCategory, ...productData } = req.body;
+
     if (!productData.name || !productData.price || !productData.mrp || !productData.sku || !category) {
         return res.status(400).json({ message: 'Name, Price, MRP, SKU, and Category are required fields.' });
     }
+
     try {
         const dataToUpdate: any = {
             ...productData,
@@ -56,38 +58,73 @@ export const updateProduct = async (req: AuthRequest, res: Response, next: NextF
         delete dataToUpdate.variants;
         delete dataToUpdate.id;
 
-        const updatedProduct = await prisma.$transaction(async (tx) => {
-            const product = await tx.product.update({ where: { id }, data: dataToUpdate });
-            if (variants && Array.isArray(variants)) {
-                const existingVariants = await tx.productVariant.findMany({ where: { productId: id } });
-                const existingVariantIds = new Set(existingVariants.map(v => v.id));
-                
-                const incomingVariants = variants.map((v: any) => ({ ...v, id: isMongoDbId(v.id) ? v.id : undefined }));
-                const incomingVariantIds = new Set(incomingVariants.map((v: any) => v.id).filter(Boolean));
-                
-                const variantsToDelete = existingVariants.filter(v => !incomingVariantIds.has(v.id));
-                if (variantsToDelete.length > 0) {
-                    await tx.productVariant.deleteMany({ where: { id: { in: variantsToDelete.map(v => v.id) } } });
-                }
+        const updatedProduct = await prisma.$transaction(
+            async (tx) => {
+                const product = await tx.product.update({
+                    where: { id },
+                    data: dataToUpdate,
+                });
 
-                for (const variantData of incomingVariants) {
-                    const { id: variantId, ...data } = variantData;
-                    if (variantId && existingVariantIds.has(variantId)) {
-                        await tx.productVariant.update({ where: { id: variantId }, data });
-                    } else {
-                        await tx.productVariant.create({ data: { ...data, productId: id } });
+                if (variants && Array.isArray(variants)) {
+                    const existingVariants = await tx.productVariant.findMany({
+                        where: { productId: id },
+                    });
+                    const existingVariantIds = new Set(existingVariants.map((v) => v.id));
+
+                    const incomingVariants = variants.map((v: any) => ({
+                        ...v,
+                        id: isMongoDbId(v.id) ? v.id : undefined,
+                    }));
+                    const incomingVariantIds = new Set(
+                        incomingVariants.map((v: any) => v.id).filter(Boolean)
+                    );
+
+                    // Delete removed variants
+                    const variantsToDelete = existingVariants.filter(
+                        (v) => !incomingVariantIds.has(v.id)
+                    );
+                    if (variantsToDelete.length > 0) {
+                        await tx.productVariant.deleteMany({
+                            where: { id: { in: variantsToDelete.map((v) => v.id) } },
+                        });
+                    }
+
+                    // Update / Create variants
+                    for (const variantData of incomingVariants) {
+                        const { id: variantId, ...data } = variantData;
+                        if (variantId && existingVariantIds.has(variantId)) {
+                            await tx.productVariant.update({
+                                where: { id: variantId },
+                                data,
+                            });
+                        } else {
+                            await tx.productVariant.create({
+                                data: { ...data, productId: id },
+                            });
+                        }
                     }
                 }
+
+                return product;
+            },
+            {
+                timeout: 30000, // <-- extend transaction timeout to 30 seconds
             }
-            return product;
-        });
-        await logAdminAction(req, `Updated product: ${updatedProduct.name}`, `ID: ${updatedProduct.id}`);
+        );
+
+        await logAdminAction(
+            req,
+            `Updated product: ${updatedProduct.name}`,
+            `ID: ${updatedProduct.id}`
+        );
+
         res.json(updatedProduct);
     } catch (error) {
         console.error("Error updating product:", error);
         next(error);
     }
 };
+
 
 export const deleteProduct = async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;

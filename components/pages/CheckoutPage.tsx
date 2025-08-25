@@ -266,21 +266,112 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
           </form>
         );
       case 'delivery':
-        return (
-          <div>
-            <button onClick={() => handleSubmitStep('delivery')} className="w-full bg-zaina-primary dark:bg-dark-zaina-primary text-zaina-white dark:text-dark-zaina-text-primary font-semibold py-3 rounded-md hover:opacity-90 mt-4">
-              Continue to Payment
-            </button>
-          </div>
-        );
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Choose Delivery Method</h3>
+      <div className="space-y-3">
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="delivery"
+            value="standard"
+            checked={deliveryOption === 'standard'}
+            onChange={() => setDeliveryOption('standard')}
+          />
+          <span>Standard Delivery (3-5 days) - FREE</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="delivery"
+            value="fast"
+            checked={deliveryOption === 'fast'}
+            onChange={() => setDeliveryOption('fast')}
+          />
+          <span>Express Delivery (1-2 days) - ₹99</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="delivery"
+            value="scheduled"
+            checked={deliveryOption === 'scheduled'}
+            onChange={() => setDeliveryOption('scheduled' as any)} // add this type if needed
+          />
+          <span>Scheduled Delivery (Pick a date) - FREE</span>
+        </label>
+      </div>
+      <button
+        onClick={() => handleSubmitStep('delivery')}
+        className="w-full bg-zaina-primary text-white font-semibold py-3 rounded-md hover:opacity-90 mt-4"
+      >
+        Continue to Payment
+      </button>
+    </div>
+  );
+
       case 'payment':
-        return (
-            <div>
-                 <button onClick={() => handleSubmitStep('payment')} className="w-full bg-zaina-gold text-zaina-white font-semibold py-3 rounded-md">
-                     Place Order
-                 </button>
-            </div>
-        )
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Choose Payment Method</h3>
+      <div className="space-y-3">
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="payment"
+            value="upi"
+            checked={paymentMethod === 'upi'}
+            onChange={() => setPaymentMethod('upi' as any)}
+          />
+          <span>UPI</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="payment"
+            value="card"
+            checked={paymentMethod === 'card'}
+            onChange={() => setPaymentMethod('card')}
+          />
+          <span>Credit / Debit Card</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="payment"
+            value="netbanking"
+            checked={paymentMethod === 'netbanking'}
+            onChange={() => setPaymentMethod('netbanking' as any)}
+          />
+          <span>Net Banking</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
+          <input
+            type="radio"
+            name="payment"
+            value="wallet"
+            checked={paymentMethod === 'wallet'}
+            onChange={() => setPaymentMethod('wallet' as any)}
+          />
+          <span>Wallets (Paytm, PhonePe, etc.)</span>
+        </label>
+
+        {/* Disabled COD */}
+        <label className="flex items-center gap-3 p-3 border rounded-md bg-gray-100 text-gray-400 cursor-not-allowed">
+          <input type="radio" name="payment" value="cod" disabled />
+          <span>Cash on Delivery (Currently unavailable)</span>
+        </label>
+      </div>
+
+      <button
+        onClick={() => handleSubmitStep('payment')}
+        className="w-full bg-zaina-gold text-white font-semibold py-3 rounded-md"
+      >
+        Place Order
+      </button>
+    </div>
+  );
+
       default:
         return null;
     }

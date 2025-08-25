@@ -99,28 +99,28 @@ const ShopByCategories = () => {
       name: "New Arrival",
       image: "/category1.png",
       bgColor: "bg-gray-200",
-      link: "/shop",
+      link: "#",
     },
     {
       id: 2,
       name: "Suits & Gowns",
       image: "/category2.png",
       bgColor: "bg-gray-200",
-      link: "/shop",
+      link: "#",
     },
     {
       id: 3,
       name: "Sarees",
       image: "/category3.png",
       bgColor: "bg-gradient-to-br from-red-500 to-orange-400",
-      link: "/shop",
+      link: "#",
     },
     {
       id: 4,
       name: "Jwellery",
       image: "/category4.png",
       bgColor: "bg-gray-200",
-      link: "/shop",
+      link: "#",
     },
   ]
 
