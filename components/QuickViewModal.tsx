@@ -57,7 +57,7 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen, onClos
           
           <p className="text-zaina-text-primary dark:text-dark-zaina-text-primary font-body-jost mb-6 leading-relaxed">{product.description}</p>
           
-          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+          {/* <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <button 
               className="w-full sm:w-auto bg-zaina-gold text-zaina-white dark:text-dark-zaina-text-primary font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-300 font-body-jost"
             >
@@ -68,7 +68,7 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen, onClos
             >
               View Full Details
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
