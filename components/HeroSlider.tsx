@@ -310,7 +310,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
                 {slide.caption && (
                   <h1
-                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-4 md:mb-8 leading-tight transition-all duration-700 ease-out 
+                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-4xl font-bold text-black mb-4 md:mb-8 leading-tight transition-all duration-700 ease-out 
                                       ${activeIndex === index ? "opacity-100 translate-y-0 delay-[400ms]" : "opacity-0 translate-y-5"}`}
                   >
                     {slide.caption}

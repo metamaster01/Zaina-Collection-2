@@ -4,7 +4,7 @@ import WhatsAppIcon from './icons/WhatsAppIcon';
 import { ZainaColor } from '../types'; 
 
 const FloatingWhatsAppButton: React.FC = () => {
-  const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
+  const WHATSAPP_NUMBER = "+919579888992"; // Replace with actual WhatsApp number
   const WHATSAPP_MESSAGE = "Hello! I'm interested in ZAINA COLLECTION products."; // Optional pre-filled message
 
   return (
