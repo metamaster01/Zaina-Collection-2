@@ -16,7 +16,7 @@ declare global {
 }
 
 type CheckoutStep = 'shipping' | 'delivery' | 'payment';
-type PaymentMethodType = 'card' | 'cod' | 'razorpay';
+type PaymentMethodType = 'razorpay' | 'cod' | 'upi' | 'card' | 'netbanking' | 'wallet';
 type DeliveryOptionType = 'standard' | 'fast';
 
 interface CheckoutPageProps {
@@ -182,14 +182,16 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
     }
   };
 
-  const processOrderPlacement = () => {
-    setIsProcessing(true);
-    if (paymentMethod === 'card' || paymentMethod === 'cod') {
-      handleSuccessfulPayment().finally(() => setIsProcessing(false));
-    } else if (paymentMethod === 'razorpay') {
-        handleRazorpayPayment();
-    }
-  };
+ const processOrderPlacement = () => {
+  setIsProcessing(true);
+  if (paymentMethod === 'cod') {
+    // COD skips gateway
+    handleSuccessfulPayment().finally(() => setIsProcessing(false));
+  } else {
+    // Any online method (upi, card, netbanking, wallet, razorpay) uses Razorpay
+    handleRazorpayPayment();
+  }
+};
 
   const handleRazorpayPayment = async () => {
     setIsProcessing(true);

@@ -1150,9 +1150,28 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     return colorMap[colorName] || colorName?.toLowerCase() || "#6b7280";
   };
 
+  // --- Safe formatting helpers (drop-in) ---
+const isFiniteNumber = (v: unknown): v is number =>
+  Number.isFinite(typeof v === "string" ? Number(v) : v);
+
+const money = (v: unknown, digits = 2) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(digits) : "0.00";
+};
+
+const fixedOrNull = (v: unknown, digits = 1) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(digits) : null;
+};
+
+
   const priceToShow = currentVariant?.price ?? product.price;
   const mrpToShow = product.mrp;
   const discountPercentage = calculateDiscount(mrpToShow, priceToShow);
+  const ratingFixed = fixedOrNull(product.rating, 1);     // e.g., "4.5" or null
+const priceFixed  = money(priceToShow, 2);              // e.g., "1999.00"
+const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
+
 
   const productSchema = {
     "@context": "https://schema.org/",
@@ -1167,7 +1186,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       ? {
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: product.rating.toFixed(1),
+            ratingValue: ratingFixed,
             reviewCount: productReviews.length + Math.floor(Math.random() * 20),
           },
         }
@@ -1176,7 +1195,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       "@type": "Offer",
       url: window.location.href,
       priceCurrency: "INR",
-      price: priceToShow.toFixed(2),
+      price: priceFixed,
       priceValidUntil: new Date(new Date().setDate(new Date().getDate() + 30))
         .toISOString()
         .split("T")[0],
@@ -1562,23 +1581,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                 {product.name}
               </h1>
-              {product.rating && (
-                <div className="flex items-center mb-3 md:mb-4">
-                  <RatingStars rating={product.rating} />
-                  <span className="ml-2 text-sm text-gray-500">
-                    {product.rating.toFixed(1)}/5
-                  </span>
-                </div>
-              )}
+              {ratingFixed && (
+  <div className="flex items-center mb-3 md:mb-4">
+    <RatingStars rating={Number(ratingFixed)} />
+    <span className="ml-2 text-sm text-gray-500">{ratingFixed}/5</span>
+  </div>
+)}
+
 
               <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
                 <span className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-                  ₹{priceToShow.toFixed(2)}
+                  ₹{priceFixed}
                 </span>
                 {mrpToShow > priceToShow && (
                   <>
                     <span className="text-base md:text-lg lg:text-xl text-gray-500 line-through">
-                      ₹{mrpToShow.toFixed(2)}
+                      ₹{mrpFixed}
                     </span>
                     <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-medium">
                       -{discountPercentage}%

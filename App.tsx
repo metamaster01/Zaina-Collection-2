@@ -87,6 +87,7 @@ import {
 import { useScrollAnimation } from "./hooks/useScrollAnimation";
 import PromotionBanner from "./components/PromotionBanner";
 import ShopByCategories from "./components/ShopByCategories";
+import ErrorBoundary from "./errorBoundary";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -198,6 +199,104 @@ export function App(): React.ReactElement {
   const [currentPage, setCurrentPage] = useState<PageName>("home");
   const [pageData, setPageData] = useState<any>(null);
 
+  // ===== Tiny URL Router Helpers =====
+type ParsedRoute = { page: PageName; data?: any };
+
+const pageToPath = (page: PageName, data?: any): string => {
+  switch (page) {
+    case "home":
+      return "/";
+    case "shop": {
+      // supports optional category/searchTerm
+      const params = new URLSearchParams();
+      if (data?.category) params.set("category", data.category);
+      if (data?.searchTerm) params.set("q", data.searchTerm);
+      const qs = params.toString();
+      return `/shop${qs ? `?${qs}` : ""}`;
+    }
+    case "productDetail": {
+      // data can be a product object or { id } or just the id string
+      const id =
+        typeof data === "string" ? data : data?.id ?? data?._id ?? "";
+      return id ? `/product/${encodeURIComponent(id)}` : "/shop";
+    }
+    case "about":
+      return "/about";
+    case "contact":
+      return "/contact";
+    case "auth":
+      return "/auth";
+    case "cart":
+      return "/cart";
+    case "checkout":
+      return "/checkout";
+    case "policy":
+      // expect data.slug when navigating into a CMS policy page
+      return data?.slug ? `/policy/${encodeURIComponent(data.slug)}` : "/policy";
+    case "userDashboard": {
+      const params = new URLSearchParams();
+      if (data?.section) params.set("section", data.section);
+      const qs = params.toString();
+      return `/dashboard${qs ? `?${qs}` : ""}`;
+    }
+    case "adminDashboard": {
+      const params = new URLSearchParams();
+      if (data?.section) params.set("section", data.section);
+      const qs = params.toString();
+      return `/admin${qs ? `?${qs}` : ""}`;
+    }
+    case "blogIndex":
+      return "/blog";
+    case "blogPost":
+      return data?.slug ? `/blog/${encodeURIComponent(data.slug)}` : "/blog";
+    default:
+      return "/404";
+  }
+};
+
+const pathToPage = (pathname: string, search: string): ParsedRoute => {
+  const seg = pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+  const qs = new URLSearchParams(search);
+
+  if (seg.length === 0) return { page: "home" };
+
+  if (seg[0] === "shop") {
+    return {
+      page: "shop",
+      data: {
+        category: qs.get("category") || undefined,
+        searchTerm: qs.get("q") || undefined,
+      },
+    };
+  }
+
+  if (seg[0] === "product" && seg[1]) {
+    return { page: "productDetail", data: { id: decodeURIComponent(seg[1]) } };
+  }
+
+  if (seg[0] === "about") return { page: "about" };
+  if (seg[0] === "contact") return { page: "contact" };
+  if (seg[0] === "auth") return { page: "auth" };
+  if (seg[0] === "cart") return { page: "cart" };
+  if (seg[0] === "checkout") return { page: "checkout" };
+  if (seg[0] === "policy") {
+    return { page: "policy", data: { slug: seg[1] ? decodeURIComponent(seg[1]) : undefined } };
+  }
+  if (seg[0] === "dashboard") {
+    return { page: "userDashboard", data: { section: qs.get("section") || undefined } };
+  }
+  if (seg[0] === "admin") {
+    return { page: "adminDashboard", data: { section: qs.get("section") || undefined } };
+  }
+  if (seg[0] === "blog" && seg[1]) {
+    return { page: "blogPost", data: { slug: decodeURIComponent(seg[1]) } };
+  }
+  if (seg[0] === "blog") return { page: "blogIndex" };
+
+  return { page: "notFound" as PageName };
+};
+
+
   // Modal & UI State
   const [selectedProductForQuickView, setSelectedProductForQuickView] =
     useState<Product | null>(null);
@@ -300,6 +399,61 @@ export function App(): React.ReactElement {
 
   // --- HOOKS & EFFECTS ---
   useScrollAnimation(currentPage);
+
+
+  //added part : 
+
+  // On first mount, read the current URL and set currentPage/pageData
+useEffect(() => {
+  const { page, data } = pathToPage(window.location.pathname, window.location.search);
+  setCurrentPage(page);
+  // For productDetail we might only have the id in the URL; we will resolve to a full product later
+  if (page === "productDetail" && data?.id) {
+    setPageData(data.id); // temporarily store the id
+  } else {
+    setPageData(data ?? null);
+  }
+  // don't scroll here; let the browser keep position on reload/direct hit
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// If URL says /product/:id and pageData is just an id, map it to the actual product once products are loaded
+useEffect(() => {
+  if (currentPage === "productDetail" && typeof pageData === "string") {
+    const product = products.find((p) => p.id === pageData);
+    if (product) setPageData(product);
+  }
+}, [currentPage, pageData, products]);
+
+// Back/Forward handling: when the user presses the browser buttons, re-derive page from the URL
+useEffect(() => {
+  const onPop = () => {
+    const { page, data } = pathToPage(window.location.pathname, window.location.search);
+    setCurrentPage(page);
+    // mirror the same product-id handling as initial load
+    if (page === "productDetail" && data?.id) {
+      setPageData(data.id);
+    } else {
+      setPageData(data ?? null);
+    }
+    window.scrollTo(0, 0);
+  };
+  window.addEventListener("popstate", onPop);
+  return () => window.removeEventListener("popstate", onPop);
+}, []);
+
+
+useEffect(() => {
+  if (currentPage !== "productDetail") return;
+  if (typeof pageData !== "string") return;
+
+  const product = products.find(
+    (p: any) => String(p.id ?? p._id) === String(pageData)
+  );
+  if (product) setPageData(product);
+}, [currentPage, pageData, products]);
+
+
 
   const isMongoDbId = (id: string): boolean => {
     if (!id) return false;
@@ -583,62 +737,138 @@ export function App(): React.ReactElement {
 
   // --- HANDLER FUNCTIONS ---
 
+  // const navigateToPage = useCallback(
+  //   async (page: PageName, data: any = null) => {
+  //     if (page === "productDetail" && data?.id) {
+  //       const productId = data.id;
+  //       // Optimistic update for UI responsiveness
+  //       setRecentlyViewed((prev) =>
+  //         [productId, ...prev.filter((id) => id !== productId)].slice(0, 10)
+  //       );
+
+  //       if (isLoggedIn) {
+  //         try {
+  //           const token = localStorage.getItem("zaina-authToken");
+  //           await axios.post(
+  //             `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
+  //             { productId },
+  //             { headers: { Authorization: `Bearer ${token}` } }
+  //           );
+  //         } catch (error) {
+  //           console.error("Failed to sync recently viewed item", error);
+  //           // Optionally revert optimistic update, though it's low-risk
+  //         }
+  //       }
+  //     }
+
+  //     if (
+  //       (page === "userDashboard" || page === "adminDashboard") &&
+  //       !isLoggedIn
+  //     ) {
+  //       setLoginRedirectTarget({ page, data });
+  //       setCurrentPage("auth");
+  //       setPageData(null);
+  //       window.scrollTo(0, 0);
+  //       return;
+  //     }
+
+  //     if (page === "policy" && data?.slug) {
+  //       const policyPageContent = cmsPages.find((p) => p.slug === data.slug);
+  //       if (policyPageContent) {
+  //         setCurrentPage("policy");
+  //         setPageData({
+  //           title: policyPageContent.title,
+  //           htmlContent: policyPageContent.content,
+  //         });
+  //       } else {
+  //         setCurrentPage("notFound");
+  //         setPageData(null);
+  //       }
+  //     } else {
+  //       setCurrentPage(page);
+  //       setPageData(data);
+  //     }
+
+  //     window.scrollTo(0, 0);
+  //   },
+  //   [isLoggedIn, cmsPages]
+  // );
+
   const navigateToPage = useCallback(
-    async (page: PageName, data: any = null) => {
-      if (page === "productDetail" && data?.id) {
-        const productId = data.id;
-        // Optimistic update for UI responsiveness
-        setRecentlyViewed((prev) =>
-          [productId, ...prev.filter((id) => id !== productId)].slice(0, 10)
-        );
-
-        if (isLoggedIn) {
-          try {
-            const token = localStorage.getItem("zaina-authToken");
-            await axios.post(
-              `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
-              { productId },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-          } catch (error) {
-            console.error("Failed to sync recently viewed item", error);
-            // Optionally revert optimistic update, though it's low-risk
-          }
+  async (page: PageName, data: any = null) => {
+    // keep your existing "recently viewed" logic
+    if (page === "productDetail" && (data?.id || data?._id)) {
+      const productId = data.id ?? data._id;
+      setRecentlyViewed((prev) => [productId, ...prev.filter((id) => id !== productId)].slice(0, 10));
+      if (isLoggedIn) {
+        try {
+          const token = localStorage.getItem("zaina-authToken");
+          await axios.post(
+            `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
+            { productId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch (error) {
+          console.error("Failed to sync recently viewed item", error);
         }
       }
+    }
 
-      if (
-        (page === "userDashboard" || page === "adminDashboard") &&
-        !isLoggedIn
-      ) {
-        setLoginRedirectTarget({ page, data });
-        setCurrentPage("auth");
-        setPageData(null);
-        window.scrollTo(0, 0);
-        return;
-      }
-
-      if (page === "policy" && data?.slug) {
-        const policyPageContent = cmsPages.find((p) => p.slug === data.slug);
-        if (policyPageContent) {
-          setCurrentPage("policy");
-          setPageData({
-            title: policyPageContent.title,
-            htmlContent: policyPageContent.content,
-          });
-        } else {
-          setCurrentPage("notFound");
-          setPageData(null);
-        }
-      } else {
-        setCurrentPage(page);
-        setPageData(data);
-      }
-
+    // gating: dashboards require auth, bounce to auth
+    if ((page === "userDashboard" || page === "adminDashboard") && !isLoggedIn) {
+      setLoginRedirectTarget({ page, data });
+      setCurrentPage("auth");
+      setPageData(null);
+      const authPath = pageToPath("auth");
+      window.history.pushState({ page: "auth" }, "", authPath);
       window.scrollTo(0, 0);
-    },
-    [isLoggedIn, cmsPages]
+      return;
+    }
+
+    // policy page resolves slug to actual CMS content (keep your logic)
+    if (page === "policy" && data?.slug) {
+      const policyPageContent = cmsPages.find((p) => p.slug === data.slug);
+      if (policyPageContent) {
+        setCurrentPage("policy");
+        setPageData({
+          title: policyPageContent.title,
+          htmlContent: policyPageContent.content,
+        });
+      } else {
+        setCurrentPage("notFound");
+        setPageData(null);
+      }
+    } else {
+      setCurrentPage(page);
+      setPageData(data);
+    }
+
+    // NEW: push a URL so Back/Forward work
+    const newPath = pageToPath(page, data);
+    window.history.pushState({ page, data }, "", newPath);
+
+    window.scrollTo(0, 0);
+  },
+  [isLoggedIn, cmsPages, setLoginRedirectTarget, setRecentlyViewed]
+);
+
+// Map pageData (which may be an id string or a partial) to a real product from the list
+const getProductFromRoute = (pageData: any, products: any[]) => {
+  if (!pageData) return undefined;
+  // Accept id in multiple shapes: "id", "_id", or the value itself if string
+  const id =
+    typeof pageData === "string"
+      ? pageData
+      : pageData.id ?? pageData._id ?? pageData?.productId;
+
+  if (!id) return undefined;
+
+  return products.find(
+    (p: any) => String(p.id ?? p._id) === String(id)
   );
+};
+
+
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -1527,6 +1757,17 @@ export function App(): React.ReactElement {
         const viewedProducts = products.filter((p) =>
           recentlyViewed.includes(p.id)
         );
+
+          const product = getProductFromRoute(pageData, products);
+
+  // While products are loading or we haven't matched the id yet, show a lightweight loader
+  if (!product) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <span className="animate-pulse text-gray-500">Loading product…</span>
+      </div>
+    );
+  }
         return pageData ? (
           <ProductDetailPage
             product={pageData}
@@ -1815,7 +2056,13 @@ if (!siteSettings) {
         logoUrl={siteSettings.storeSettings.logoUrl}
         products={products}
       />
-      <main className={pageContainerClass}>{renderPage()}</main>
+      <main className={pageContainerClass}>
+        <ErrorBoundary onHome={() => navigateToPage("home")}>
+        {renderPage()}
+
+        </ErrorBoundary>
+        
+        </main>
 
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <Footer
