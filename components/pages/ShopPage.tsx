@@ -1,7 +1,6 @@
-
-import React, { useState, useEffect } from 'react';
-import { Product, NavLinkItem, Category } from '../../types';
-import ProductGrid from '../ProductGrid';
+import React, { useState, useEffect } from "react";
+import { Product, NavLinkItem, Category } from "../../types";
+import ProductGrid from "../ProductGrid";
 
 interface ShopPageProps {
   products: Product[];
@@ -17,72 +16,130 @@ interface ShopPageProps {
   isProductInCompare: (productId: string) => boolean;
 }
 
-const ShopPage: React.FC<ShopPageProps> = ({ 
-    products,
-    categories,
-    onProductQuickView, 
-    onProductQuickShop, 
-    onViewProductDetail,
-    initialCategory,
-    initialSearchTerm,
-    onToggleWishlist,
-    isProductInWishlist,
-    onToggleCompare,
-    isProductInCompare
+const ShopPage: React.FC<ShopPageProps> = ({
+  products,
+  categories,
+  onProductQuickView,
+  onProductQuickShop,
+  onViewProductDetail,
+  initialCategory,
+  initialSearchTerm,
+  onToggleWishlist,
+  isProductInWishlist,
+  onToggleCompare,
+  isProductInCompare,
 }) => {
-  const [activeCategory, setActiveCategory] = useState(initialCategory || 'ALL');
-  const [pageTitle, setPageTitle] = useState('Shop Our Collection');
-  const [headerMessage, setHeaderMessage] = useState('Discover exquisite ethnic wear, curated for the modern woman.');
+  const [activeCategory, setActiveCategory] = useState(
+    initialCategory || "ALL"
+  );
+  const [pageTitle, setPageTitle] = useState("Shop Our Collection");
+  const [headerMessage, setHeaderMessage] = useState(
+    "Discover exquisite ethnic wear, curated for the modern woman."
+  );
+
+  const toLower = (v?: string | null) =>
+    typeof v === "string" ? v.toLowerCase() : "";
 
   useEffect(() => {
     if (initialSearchTerm) {
-      setActiveCategory('ALL'); // When searching, we don't filter by category
+      setActiveCategory("ALL"); // When searching, we don't filter by category
       setPageTitle(`Search Results`);
       setHeaderMessage(`Showing results for "${initialSearchTerm}"`);
     } else if (initialCategory) {
-      setActiveCategory(initialCategory);
-      setPageTitle(initialCategory);
+      setActiveCategory(initialCategory.toUpperCase());
+      setPageTitle(initialCategory.toUpperCase());
       setHeaderMessage(`Explore our collection of ${initialCategory}.`);
     } else {
-      setActiveCategory('ALL');
-      setPageTitle('Shop Our Collection');
-      setHeaderMessage('Discover exquisite ethnic wear, curated for the modern woman.');
+      setActiveCategory("ALL");
+      setPageTitle("Shop Our Collection");
+      setHeaderMessage(
+        "Discover exquisite ethnic wear, curated for the modern woman."
+      );
     }
   }, [initialCategory, initialSearchTerm]);
-  
+
   const categoriesList = [
-    { id: 'all', label: 'ALL' },
-    ...categories.map(cat => ({ id: cat.id, label: cat.name.toUpperCase() }))
+    { id: "all", label: "ALL" },
+    ...categories.map((cat) => ({
+      id: cat.id,
+      label: (cat.name ?? "").toUpperCase(),
+    })),
   ];
 
-  
+  // const getFilteredProducts = () => {
+  //   let filtered = products.filter(p => p.publishStatus === 'Published');
+
+  //   // First, filter by search term if it exists
+  //   if (initialSearchTerm) {
+  //     const term = initialSearchTerm.toLowerCase();
+  //     filtered = filtered.filter(p =>
+  //       p.name.toLowerCase().includes(term) ||
+  //       p.category.toLowerCase().includes(term) ||
+  //       p.description.toLowerCase().includes(term) ||
+  //       (p.tags && p.tags.some(tag => tag.toLowerCase().includes(term)))
+  //     );
+  //     return filtered;
+  //   }
+
+  //   // If no search term, filter by category
+  //   if (activeCategory === 'ALL') {
+  //     return filtered;
+  //   }
+
+  //   // Find the category and its subcategories
+  //   const selectedCat = categories.find(c => c.name.toUpperCase() === activeCategory);
+  //   const validCategoryNames = selectedCat ? [selectedCat.name, ...selectedCat.subCategories.map(sc => sc.name)] : [activeCategory];
+
+  //   return filtered.filter(p =>
+  //     validCategoryNames.some(name => p.category.toLowerCase() === name.toLowerCase())
+  //   );
+  // };
+
   const getFilteredProducts = () => {
-    let filtered = products.filter(p => p.publishStatus === 'Published');
+    // Only published
+    let filtered = products.filter((p) => p.publishStatus === "Published");
 
-    // First, filter by search term if it exists
+    // Search flow
     if (initialSearchTerm) {
-      const term = initialSearchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term) ||
-        p.description.toLowerCase().includes(term) ||
-        (p.tags && p.tags.some(tag => tag.toLowerCase().includes(term)))
-      );
+      const term = toLower(initialSearchTerm);
+      filtered = filtered.filter((p) => {
+        const name = toLower(p.name);
+        const category = toLower(p.categoryName);
+        const description = toLower(p.description);
+        const hasTagMatch = (p.tags ?? []).some((tag) =>
+          toLower(tag).includes(term)
+        );
+        return (
+          name.includes(term) ||
+          category.includes(term) ||
+          description.includes(term) ||
+          hasTagMatch
+        );
+      });
       return filtered;
     }
 
-    // If no search term, filter by category
-    if (activeCategory === 'ALL') {
-      return filtered;
-    }
-    
-    // Find the category and its subcategories
-    const selectedCat = categories.find(c => c.name.toUpperCase() === activeCategory);
-    const validCategoryNames = selectedCat ? [selectedCat.name, ...selectedCat.subCategories.map(sc => sc.name)] : [activeCategory];
+    // Category flow
+    if (activeCategory === "ALL") return filtered;
 
-    return filtered.filter(p => 
-      validCategoryNames.some(name => p.category.toLowerCase() === name.toLowerCase())
+    // Find the selected category safely
+    const selectedCat = categories.find(
+      (c) => (c.name ?? "").toUpperCase() === activeCategory
     );
+
+    // Collect valid category names (parent + subcats), filter out empties
+    const validCategoryNames = selectedCat
+      ? ([
+          selectedCat.name,
+          ...(selectedCat.subCategories ?? []).map((sc) => sc?.name),
+        ].filter(Boolean) as string[])
+      : [activeCategory];
+
+    // Compare in lowercase only
+    return filtered.filter((p) => {
+      const prodCat = toLower(p.category);
+      return validCategoryNames.some((name) => prodCat === toLower(name));
+    });
   };
 
   const filteredProducts = getFilteredProducts();
@@ -107,13 +164,17 @@ const ShopPage: React.FC<ShopPageProps> = ({
                 key={cat.id}
                 onClick={() => {
                   setActiveCategory(cat.label);
-                  setPageTitle(cat.label === 'ALL' ? 'All Products' : cat.label);
+                  setPageTitle(
+                    cat.label === "ALL" ? "All Products" : cat.label
+                  );
                   setHeaderMessage(`Explore our collection of ${cat.label}.`);
                 }}
                 className={`py-2 px-4 md:py-2.5 md:px-6 rounded-md font-body-jost font-semibold text-sm md:text-base transition-all duration-300
-                  ${activeCategory === cat.label
-                    ? 'bg-zaina-gold text-zaina-white dark:bg-zaina-gold dark:text-dark-zaina-text-primary shadow-md'
-                    : `bg-zaina-neutral-light dark:bg-dark-zaina-neutral-medium text-zaina-text-primary dark:text-dark-zaina-text-primary hover:bg-zaina-primary/10 dark:hover:bg-dark-zaina-primary/20 hover:text-zaina-primary dark:hover:text-dark-zaina-primary`}
+                  ${
+                    activeCategory === cat.label
+                      ? "bg-zaina-gold text-zaina-white dark:bg-zaina-gold dark:text-dark-zaina-text-primary shadow-md"
+                      : `bg-zaina-neutral-light dark:bg-dark-zaina-neutral-medium text-zaina-text-primary dark:text-dark-zaina-text-primary hover:bg-zaina-primary/10 dark:hover:bg-dark-zaina-primary/20 hover:text-zaina-primary dark:hover:text-dark-zaina-primary`
+                  }
                 `}
               >
                 {cat.label}
@@ -123,12 +184,18 @@ const ShopPage: React.FC<ShopPageProps> = ({
         )}
 
         <ProductGrid
-          title={initialSearchTerm ? '' : (activeCategory === 'ALL' ? 'All Products' : '')}
+          title={
+            initialSearchTerm
+              ? ""
+              : activeCategory === "ALL"
+              ? "All Products"
+              : ""
+          }
           products={filteredProducts}
           onProductQuickView={onProductQuickView}
           onProductQuickShop={onProductQuickShop}
           onProductCardClick={onViewProductDetail}
-          sectionBgColor="bg-transparent" 
+          sectionBgColor="bg-transparent"
           titleColor="text-zaina-text-primary dark:text-dark-zaina-text-primary"
           onToggleWishlist={onToggleWishlist}
           isProductInWishlist={isProductInWishlist}

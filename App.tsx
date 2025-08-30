@@ -501,8 +501,30 @@ useEffect(() => {
       );
       const data = response.data;
 
-      setProducts(data.products || []);
-      setCategories(data.categories || []);
+      const normalizedProducts = (data.products || []).map((p: any) => ({
+  ...p,
+  // Ensure a stable id your components use everywhere
+  id: p.id ?? p._id ?? String(p._id ?? ''),
+
+  // Normalize category to a single string field used by filters/search
+  category:
+    p.category ??
+    p.categoryName ??
+    (typeof p.category === 'object' && p.category?.name ? p.category.name : '') ??
+    '',
+}));
+
+setProducts(normalizedProducts);
+
+// also make sure categories always have subCategories array
+setCategories((data.categories || []).map((c: any) => ({
+  ...c,
+  subCategories: Array.isArray(c.subCategories) ? c.subCategories : [],
+})));
+
+
+      // setProducts(data.products || []);
+      // setCategories(data.categories || []);
 
       setHeroSlides(data.heroSlides || []);
       setOccasions(data.occasions || []);
@@ -536,6 +558,8 @@ useEffect(() => {
       setSiteSettings(defaultSiteSettings);
     }
   }, []);
+
+
 
   const fetchUserData = useCallback(async () => {
     const token = localStorage.getItem("zaina-authToken");
