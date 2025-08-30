@@ -574,8 +574,18 @@ setCategories((data.categories || []).map((c: any) => ({
       const data = response.data;
       setCurrentUser(data.profile); // Update user profile with latest data
       setUserOrders(data.orders || []);
-      setUserAddresses(data.addresses || []);
-      setUserSupportTickets(data.supportTickets || []);
+      // setUserAddresses(data.addresses || []);
+      // setUserSupportTickets(data.supportTickets || []);
+
+      setUserAddresses((data.addresses || []).map((a: any) => ({
+  ...a,
+  id: a.id ?? a._id, // <-- normalize here
+})));
+
+setUserSupportTickets((data.supportTickets || []).map((t: any) => ({
+  ...t,
+  id: t.id ?? t._id, // (same idea for tickets)
+})));
       setUserPaymentMethods(data.paymentMethods || []);
     } catch (err) {
       console.error("Failed to fetch user dashboard data", err);
@@ -1139,20 +1149,72 @@ const getProductFromRoute = (pageData: any, products: any[]) => {
   );
 
   // --- USER DASHBOARD HANDLERS ---
-  const onUpdateProfile = async (updatedProfile: UserProfile) => {
-    try {
-      const token = localStorage.getItem("zaina-authToken");
-      await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/user/profile`,
-        updatedProfile,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCurrentUser((prev) => ({ ...prev, ...updatedProfile } as UserProfile));
-      alert("Profile saved successfully!");
-    } catch (err) {
-      alert("Failed to save profile.");
+  // const onUpdateProfile = async (updatedProfile: UserProfile) => {
+  //   try {
+  //     const token = localStorage.getItem("zaina-authToken");
+
+  //     const dob = updatedProfile.dateOfBirth
+  //     ? new Date(`${updatedProfile.dateOfBirth}T00:00:00.000Z`).toISOString()
+  //     : null;
+
+  //   const payload = { ...updatedProfile, dateOfBirth: dob };
+
+  //     await axios.put(
+  //       `https://zaina-collection-backend.vercel.app/api/user/profile`,
+  //       updatedProfile,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setCurrentUser((prev) => ({ ...prev, ...payload } as UserProfile));
+  //     alert("Profile saved successfully!");
+  //   } catch (err) {
+  //     alert("Failed to save profile.");
+  //   }
+  // };
+
+  // App.tsx
+const onUpdateProfile = async (updatedProfile: UserProfile) => {
+  try {
+    const token = localStorage.getItem("zaina-authToken");
+
+    // 1) Extract ONLY the fields your API allows to update
+    const name = updatedProfile.name?.trim() ?? '';
+    const phone = updatedProfile.phone?.trim() ?? '';
+    const profilePictureUrl = updatedProfile.profilePictureUrl ?? null;
+
+    // 2) Normalize DOB
+    // profileData.dateOfBirth is from <input type="date"> so it's either '' or 'YYYY-MM-DD'
+    let dateOfBirth: string | number | null = null;
+
+    if (updatedProfile.dateOfBirth && updatedProfile.dateOfBirth.length === 10) {
+      // Prefer ISO; if your backend prefers timestamps, switch to getTime() (see alt below)
+      const iso = new Date(`${updatedProfile.dateOfBirth}T00:00:00.000Z`).toISOString();
+      dateOfBirth = iso;
+    } else {
+      // If empty string or invalid -> null
+      dateOfBirth = null;
     }
-  };
+
+    const payload: any = { name, phone, profilePictureUrl, dateOfBirth };
+
+    // 3) NEVER send email, role, password, joinDate, _id, etc. in this request
+
+    const res = await axios.put(
+      "https://zaina-collection-backend.vercel.app/api/user/profile",
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // 4) Update local state with what the server actually saved (best), or with our payload (fallback)
+    setCurrentUser((prev) => ({ ...prev, ...res.data?.profile ?? payload } as UserProfile));
+    alert("Profile saved successfully!");
+  } catch (err: any) {
+    // Surface real server message if present
+    const serverMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
+    console.error("Update profile failed:", err?.response ?? err);
+    alert(`Failed to save profile: ${serverMsg ?? "Unknown error"}`);
+  }
+};
+
 
   const onChangePassword = async (passwords: {
     current: string;
@@ -1174,27 +1236,61 @@ const getProductFromRoute = (pageData: any, products: any[]) => {
     }
   };
 
-  const onSaveAddress = async (address: Address) => {
-    try {
-      const token = localStorage.getItem("zaina-authToken");
-      if (userAddresses.some((a) => a.id === address.id)) {
-        await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/user/addresses/${address.id}`,
-          address,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } else {
-        await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/user/addresses`,
-          address,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-      await fetchUserData(); // Re-fetch all user data
-    } catch (err) {
-      alert("Failed to save address.");
+  // const onSaveAddress = async (address: Address) => {
+  //   try {
+  //     const token = localStorage.getItem("zaina-authToken");
+  //     if (userAddresses.some((a) => a.id === address.id)) {
+  //       await axios.put(
+  //         `https://zaina-collection-backend.vercel.app/api/user/addresses/${address.id}`,
+  //         address,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //     } else {
+  //       await axios.post(
+  //         `https://zaina-collection-backend.vercel.app/api/user/addresses`,
+  //         address,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //     }
+  //     await fetchUserData(); // Re-fetch all user data
+  //   } catch (err) {
+  //     alert("Failed to save address.");
+  //   }
+  // };
+
+  // App.tsx
+const onSaveAddress = async (address: Address) => {
+  try {
+    const token = localStorage.getItem("zaina-authToken");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const isUpdating = Boolean(address.id) && isMongoDbId(String(address.id)); // robust check
+
+    if (isUpdating) {
+      // Avoid sending id in the body if your API expects it only in the URL
+      const { id, ...payload } = address as any;
+      await axios.put(
+        `https://zaina-collection-backend.vercel.app/api/user/addresses/${id}`,
+        payload,
+        { headers }
+      );
+    } else {
+      // New address: do not send a fabricated id
+      const { id, ...payload } = address as any;
+      await axios.post(
+        `https://zaina-collection-backend.vercel.app/api/user/addresses`,
+        payload,
+        { headers }
+      );
     }
-  };
+
+    // Re-fetch (or optimistically update if you prefer)
+    await fetchUserData();
+  } catch (err) {
+    alert("Failed to save address.");
+  }
+};
+
 
   const onDeleteAddress = async (addressId: string) => {
     try {
@@ -1210,27 +1306,58 @@ const getProductFromRoute = (pageData: any, products: any[]) => {
     }
   };
 
-  const onSaveSupportTicket = async (ticket: SupportTicket) => {
-    try {
-      const token = localStorage.getItem("zaina-authToken");
-      if (userSupportTickets.some((t) => t.id === ticket.id)) {
-        await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${ticket.id}`,
-          ticket,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } else {
-        await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
-          ticket,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-      await fetchUserData();
-    } catch (err) {
-      alert("Failed to save support ticket.");
+  // const onSaveSupportTicket = async (ticket: SupportTicket) => {
+  //   try {
+  //     const token = localStorage.getItem("zaina-authToken");
+  //     if (userSupportTickets.some((t) => t.id === ticket.id)) {
+  //       await axios.put(
+  //         `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${ticket.id}`,
+  //         ticket,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //     } else {
+  //       await axios.post(
+  //         `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
+  //         ticket,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //     }
+  //     await fetchUserData();
+  //   } catch (err) {
+  //     alert("Failed to save support ticket.");
+  //   }
+  // };
+
+  // App.tsx
+const onSaveSupportTicket = async (ticket: SupportTicket) => {
+  try {
+    const token = localStorage.getItem("zaina-authToken");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const isUpdating = Boolean(ticket.id) && isMongoDbId(String(ticket.id));
+
+    if (isUpdating) {
+      const { id, ...payload } = ticket as any;
+      await axios.put(
+        `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${id}`,
+        payload,
+        { headers }
+      );
+    } else {
+      const { id, ...payload } = ticket as any;
+      await axios.post(
+        `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
+        payload,
+        { headers }
+      );
     }
-  };
+
+    await fetchUserData();
+  } catch (err) {
+    alert("Failed to save support ticket.");
+  }
+};
+
 
   // --- ADMIN HANDLERS ---
   const onSaveProduct = async (productData: Product) => {

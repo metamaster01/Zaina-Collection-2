@@ -11,7 +11,24 @@ interface UserProfileSectionProps {
 }
 
 const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user, onSave, onChangePassword }) => {
-  const [profileData, setProfileData] = useState<UserProfile>(user);
+
+  const dateToInput = (d?: string | null) => {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '';
+  const yyyy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+
+const [profileData, setProfileData] = useState<UserProfile>({
+  ...user,
+  dateOfBirth: dateToInput(user.dateOfBirth as any),
+});
+
+
   const [isEditing, setIsEditing] = useState(false);
   
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmNewPassword: '' });

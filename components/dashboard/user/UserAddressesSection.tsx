@@ -34,12 +34,19 @@ const UserAddressesSection: React.FC<UserAddressesSectionProps> = ({ addresses, 
         alert("Please fill all required fields.");
         return;
     }
+    // const newAddress: Address = {
+    //     id: editingAddress ? editingAddress.id : `addr${Date.now()}`,
+    //     userId: userId,
+    //     type: formData.type || 'shipping',
+    //     ...formData,
+    // } as Address;
+
     const newAddress: Address = {
-        id: editingAddress ? editingAddress.id : `addr${Date.now()}`,
-        userId: userId,
-        type: formData.type || 'shipping',
-        ...formData,
-    } as Address;
+  ...(editingAddress ? { id: editingAddress.id } : {}), // keep id only when editing
+  userId,
+  type: formData.type || 'shipping',
+  ...formData,
+} as Address;
 
     onSave(newAddress);
     resetForm();

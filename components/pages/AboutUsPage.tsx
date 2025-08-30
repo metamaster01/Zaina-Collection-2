@@ -333,7 +333,7 @@ export default function AboutPage() {
                   height={24}
                   className="h-6 w-6 rounded-full"
                 />
-                — Aanya Sharma, Founder
+                — Zaina, Founder
               </p>
             </div>
           </div>

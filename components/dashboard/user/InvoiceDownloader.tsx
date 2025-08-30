@@ -51,7 +51,7 @@ const InvoiceDownloader: React.FC<InvoiceDownloaderProps> = ({ invoiceData }) =>
     const grandTotal = calculatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const vatTotal = grandTotal - subtotalExclVat;
 
-    const formatCurrency = (amount: number) => `£${amount.toFixed(2)}`;
+    const formatCurrency = (amount: number) => `Rs.${amount.toFixed(2)}`;
 
     // --- PDF Content ---
     const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
@@ -61,7 +61,7 @@ const InvoiceDownloader: React.FC<InvoiceDownloaderProps> = ({ invoiceData }) =>
     // Logo and Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('ZINA', margin, 20);
+    doc.text('Zaina Collection', margin, 20);
 
     doc.setFontSize(14);
     doc.text('INVOICE', pageWidth - margin, 20, { align: 'right' });
