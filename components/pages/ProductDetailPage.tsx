@@ -1145,6 +1145,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       Charcoal: "#36454f",
       CreamPink: "#fddde6",
       OffWhite: "#faf9f6",
+      MauvePink: "#e0b0ff"
     };
 
     return colorMap[colorName] || colorName?.toLowerCase() || "#6b7280";
