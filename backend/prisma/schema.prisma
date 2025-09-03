@@ -133,6 +133,7 @@ model ProductVariant {
 model Category {
   id            String     @id @default(auto()) @map("_id") @db.ObjectId
   name          String     @unique
+  slug          String     @unique
 
   // Self-relation for subcategories
   parentId      String?    @db.ObjectId

@@ -1,6 +1,6 @@
 
 import express, { Request, Response } from 'express';
-import { createProduct, deleteProduct, getAllCustomers, getAllOrders, updateOrderStatus, updateProduct, getCoupons, createCoupon, updateCoupon, deleteCoupon, getMediaLibrary, createCategory, updateCategory, deleteCategory, getCategories, createTestimonial, getTestimonials, updateTestimonial, deleteTestimonial, getDashboardData, getAdminChatSessions, getChatMessages, sendAdminMessage, getReviews, updateReview, deleteReview, getFaqs, createFaq, updateFaq, deleteFaq, updateStock, getWishlistAnalytics, toggleCustomerBlock, addMediaFile, deleteMediaFile, getPaymentGateways, updatePaymentGateway, getVariantAttributes, createVariantAttribute, updateVariantAttribute, deleteVariantAttribute, getShippingZones, createShippingZone, updateShippingZone, deleteShippingZone, getShippingProviders, updateShippingProvider, getSiteSettings, updateSiteSettings, updateSupportTicket, getTags, deleteTagFromAllProducts, createAdminUser, updateAdminUser, deleteAdminUser, getNotifications, getOrderById } from '../controllers/admin.controller';
+import { createProduct, deleteProduct, getAllCustomers, getAllOrders, updateOrderStatus, updateProduct, getCoupons, createCoupon, updateCoupon, deleteCoupon, getMediaLibrary, createCategory, updateCategory, deleteCategory, getCategories, createTestimonial, getTestimonials, updateTestimonial, deleteTestimonial, getDashboardData, getAdminChatSessions, getChatMessages, sendAdminMessage, getReviews, updateReview, deleteReview, getFaqs, createFaq, updateFaq, deleteFaq, updateStock, getWishlistAnalytics, toggleCustomerBlock, addMediaFile, deleteMediaFile, getPaymentGateways, updatePaymentGateway, getVariantAttributes, createVariantAttribute, updateVariantAttribute, deleteVariantAttribute, getShippingZones, createShippingZone, updateShippingZone, deleteShippingZone, getShippingProviders, updateShippingProvider, getSiteSettings, updateSiteSettings, updateSupportTicket, getTags, deleteTagFromAllProducts, createAdminUser, updateAdminUser, deleteAdminUser, getNotifications, getOrderById, getCategoryBySlug } from '../controllers/admin.controller';
 import { isAdmin, isAuthenticated } from '../middlewares/auth.middleware';
 import * as contentController from '../controllers/admin/content.controller';
 import prisma from '../prisma';
@@ -57,6 +57,7 @@ router.get('/categories', getCategories);
 router.post('/categories', createCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
+router.get('/categories/slug/:slug', getCategoryBySlug)
 
 // Tag Management
 router.get('/tags', getTags);

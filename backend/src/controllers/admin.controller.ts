@@ -4,6 +4,7 @@ import prisma from '../prisma';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { logAdminAction } from '../services/audit.service';
 import bcrypt from 'bcryptjs';
+import { slugify, ensureUniqueSlug } from '../utils/slug';
 
 const isMongoDbId = (id: string): boolean => {
     if(!id) return false;
@@ -389,25 +390,83 @@ export const getCategories = async (req: AuthRequest, res: Response, next: NextF
     }
 };
 
+// export const createCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     try {
+//         const category = await prisma.category.create({ data: req.body });
+//         await logAdminAction(req, 'Created category', `Name: ${category.name}`);
+//         res.status(201).json(category);
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
+// export const updateCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     const { id } = req.params;
+//     try {
+//         const category = await prisma.category.update({ where: { id }, data: req.body });
+//         await logAdminAction(req, 'Updated category', `Name: ${category.name}`);
+//         res.json(category);
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
 export const createCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-        const category = await prisma.category.create({ data: req.body });
-        await logAdminAction(req, 'Created category', `Name: ${category.name}`);
-        res.status(201).json(category);
-    } catch (error) {
-        next(error);
+  try {
+    const { name, parentId, slug } = req.body;
+
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ message: "Category name is required." });
     }
+
+    // If slug is provided, normalize it; otherwise derive from name
+    const base = slugify(slug || name);
+    const uniqueSlug = await ensureUniqueSlug(prisma, base);
+
+    const category = await prisma.category.create({
+      data: {
+        name,
+        parentId: parentId || null,
+        slug: uniqueSlug,
+      } as any,
+    });
+
+    await logAdminAction(req, "Created category", `Name: ${category.name}`);
+    res.status(201).json(category);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const updateCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    try {
-        const category = await prisma.category.update({ where: { id }, data: req.body });
-        await logAdminAction(req, 'Updated category', `Name: ${category.name}`);
-        res.json(category);
-    } catch (error) {
-        next(error);
+  const { id } = req.params;
+  try {
+    const { name, parentId, slug } = req.body;
+
+    // Fetch current so we can keep its slug if none is explicitly provided
+    const current = await prisma.category.findUnique({ where: { id } });
+    if (!current) return res.status(404).json({ message: "Category not found" });
+
+    let data: any = {
+      // If you want to allow name to be non-unique later, you can drop @unique on name
+      ...(typeof name === "string" ? { name } : {}),
+      ...(typeof parentId !== "undefined" ? { parentId: parentId || null } : {}),
+    };
+
+    if (typeof slug === "string") {
+      // Slug explicitly changed -> normalize & ensure uniqueness
+      const base = slugify(slug);
+      data.slug = await ensureUniqueSlug(prisma, base, id);
+    } else {
+      // Not provided -> keep existing slug (stable URLs)
     }
+
+    const category = await prisma.category.update({ where: { id }, data });
+    await logAdminAction(req, "Updated category", `Name: ${category.name}`);
+    res.json(category);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -430,6 +489,21 @@ export const deleteCategory = async (req: AuthRequest, res: Response, next: Next
         next(error);
     }
 };
+
+export const getCategoryBySlug = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params;
+    const category = await prisma.category.findFirst({
+      where: { slug } as any,
+      include: { subCategories: true }
+    });
+    if (!category) return res.status(404).json({ message: "Category not found" });
+    res.json(category);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // Tag Controllers
 export const getTags = async (req: AuthRequest, res: Response, next: NextFunction) => {
