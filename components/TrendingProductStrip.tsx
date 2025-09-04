@@ -212,7 +212,7 @@ const TrendingProductStrip: React.FC<TrendingProductStripProps> = ({
               autoplay={
                 autoplayEnabled
                   ? {
-                      delay: 4000,
+                      delay: 2500,
                       disableOnInteraction: false,
                       pauseOnMouseEnter: true,
                     }

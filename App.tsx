@@ -1,5 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
+import { HelmetProvider } from "react-helmet-async";
+// import SEO from "./components/SEO";
+import { slugify } from "./components/utils/slugs";
 
 // --- Import all components and constants ---
 // Components
@@ -200,102 +203,119 @@ export function App(): React.ReactElement {
   const [pageData, setPageData] = useState<any>(null);
 
   // ===== Tiny URL Router Helpers =====
-type ParsedRoute = { page: PageName; data?: any };
+  type ParsedRoute = { page: PageName; data?: any };
 
-const pageToPath = (page: PageName, data?: any): string => {
-  switch (page) {
-    case "home":
-      return "/";
-    case "shop": {
-      // supports optional category/searchTerm
-      const params = new URLSearchParams();
-      if (data?.category) params.set("category", data.category);
-      if (data?.searchTerm) params.set("q", data.searchTerm);
-      const qs = params.toString();
-      return `/shop${qs ? `?${qs}` : ""}`;
+  const pageToPath = (page: PageName, data?: any): string => {
+    switch (page) {
+      case "home":
+        return "/";
+      case "shop": {
+        const params = new URLSearchParams();
+        if (data?.searchTerm) params.set("q", data.searchTerm);
+        if (data?.categorySlug) {
+          const qs = params.toString();
+          return `/shop/${encodeURIComponent(data.categorySlug)}${
+            qs ? `?${qs}` : ""
+          }`;
+        }
+        const qs = params.toString();
+        return `/shop${qs ? `?${qs}` : ""}`;
+      }
+      case "productDetail": {
+        // data can be a product object or { id } or just the id string
+        const id =
+          typeof data === "string" ? data : data?.id ?? data?._id ?? "";
+        return id ? `/product/${encodeURIComponent(id)}` : "/shop";
+      }
+      case "about":
+        return "/about";
+      case "contact":
+        return "/contact";
+      case "auth":
+        return "/auth";
+      case "cart":
+        return "/cart";
+      case "checkout":
+        return "/checkout";
+      case "policy":
+        // expect data.slug when navigating into a CMS policy page
+        return data?.slug
+          ? `/policy/${encodeURIComponent(data.slug)}`
+          : "/policy";
+      case "userDashboard": {
+        const params = new URLSearchParams();
+        if (data?.section) params.set("section", data.section);
+        const qs = params.toString();
+        return `/dashboard${qs ? `?${qs}` : ""}`;
+      }
+      case "adminDashboard": {
+        const params = new URLSearchParams();
+        if (data?.section) params.set("section", data.section);
+        const qs = params.toString();
+        return `/admin${qs ? `?${qs}` : ""}`;
+      }
+      case "blogIndex":
+        return "/blog";
+      case "blogPost":
+        return data?.slug ? `/blog/${encodeURIComponent(data.slug)}` : "/blog";
+      default:
+        return "/404";
     }
-    case "productDetail": {
-      // data can be a product object or { id } or just the id string
-      const id =
-        typeof data === "string" ? data : data?.id ?? data?._id ?? "";
-      return id ? `/product/${encodeURIComponent(id)}` : "/shop";
+  };
+
+  const pathToPage = (pathname: string, search: string): ParsedRoute => {
+    const seg = pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+    const qs = new URLSearchParams(search);
+
+    if (seg.length === 0) return { page: "home" };
+    if (seg[0] === "shop") {
+      const categorySlug = seg[1] ? decodeURIComponent(seg[1]) : undefined;
+      return {
+        page: "shop",
+        data: {
+          categorySlug,
+          searchTerm: qs.get("q") || undefined,
+        },
+      };
     }
-    case "about":
-      return "/about";
-    case "contact":
-      return "/contact";
-    case "auth":
-      return "/auth";
-    case "cart":
-      return "/cart";
-    case "checkout":
-      return "/checkout";
-    case "policy":
-      // expect data.slug when navigating into a CMS policy page
-      return data?.slug ? `/policy/${encodeURIComponent(data.slug)}` : "/policy";
-    case "userDashboard": {
-      const params = new URLSearchParams();
-      if (data?.section) params.set("section", data.section);
-      const qs = params.toString();
-      return `/dashboard${qs ? `?${qs}` : ""}`;
+
+    if (seg[0] === "product" && seg[1]) {
+      return {
+        page: "productDetail",
+        data: { id: decodeURIComponent(seg[1]) },
+      };
     }
-    case "adminDashboard": {
-      const params = new URLSearchParams();
-      if (data?.section) params.set("section", data.section);
-      const qs = params.toString();
-      return `/admin${qs ? `?${qs}` : ""}`;
+
+    if (seg[0] === "about") return { page: "about" };
+    if (seg[0] === "contact") return { page: "contact" };
+    if (seg[0] === "auth") return { page: "auth" };
+    if (seg[0] === "cart") return { page: "cart" };
+    if (seg[0] === "checkout") return { page: "checkout" };
+    if (seg[0] === "policy") {
+      return {
+        page: "policy",
+        data: { slug: seg[1] ? decodeURIComponent(seg[1]) : undefined },
+      };
     }
-    case "blogIndex":
-      return "/blog";
-    case "blogPost":
-      return data?.slug ? `/blog/${encodeURIComponent(data.slug)}` : "/blog";
-    default:
-      return "/404";
-  }
-};
+    if (seg[0] === "dashboard") {
+      return {
+        page: "userDashboard",
+        data: { section: qs.get("section") || undefined },
+      };
+    }
+    if (seg[0] === "admin") {
+      return {
+        page: "adminDashboard",
+        data: { section: qs.get("section") || undefined },
+      };
+    }
+    if (seg[0] === "blog" && seg[1]) {
+      return { page: "blogPost", data: { slug: decodeURIComponent(seg[1]) } };
+    }
+    if (seg[0] === "blog") return { page: "blogIndex" };
 
-const pathToPage = (pathname: string, search: string): ParsedRoute => {
-  const seg = pathname.replace(/\/+$/, "").split("/").filter(Boolean);
-  const qs = new URLSearchParams(search);
-
-  if (seg.length === 0) return { page: "home" };
-
-  if (seg[0] === "shop") {
-    return {
-      page: "shop",
-      data: {
-        category: qs.get("category") || undefined,
-        searchTerm: qs.get("q") || undefined,
-      },
-    };
-  }
-
-  if (seg[0] === "product" && seg[1]) {
-    return { page: "productDetail", data: { id: decodeURIComponent(seg[1]) } };
-  }
-
-  if (seg[0] === "about") return { page: "about" };
-  if (seg[0] === "contact") return { page: "contact" };
-  if (seg[0] === "auth") return { page: "auth" };
-  if (seg[0] === "cart") return { page: "cart" };
-  if (seg[0] === "checkout") return { page: "checkout" };
-  if (seg[0] === "policy") {
-    return { page: "policy", data: { slug: seg[1] ? decodeURIComponent(seg[1]) : undefined } };
-  }
-  if (seg[0] === "dashboard") {
-    return { page: "userDashboard", data: { section: qs.get("section") || undefined } };
-  }
-  if (seg[0] === "admin") {
-    return { page: "adminDashboard", data: { section: qs.get("section") || undefined } };
-  }
-  if (seg[0] === "blog" && seg[1]) {
-    return { page: "blogPost", data: { slug: decodeURIComponent(seg[1]) } };
-  }
-  if (seg[0] === "blog") return { page: "blogIndex" };
-
-  return { page: "notFound" as PageName };
-};
-
+    return { page: "notFound" as PageName };
+  };
 
   // Modal & UI State
   const [selectedProductForQuickView, setSelectedProductForQuickView] =
@@ -388,8 +408,7 @@ const pathToPage = (pathname: string, search: string): ParsedRoute => {
   const [compareList, setCompareList] = useState<Product[]>([]);
   const [isDarkMode, setIsDarkMode] = useStickyState(false, "zaina-darkMode");
 
-
-    const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const img = new Image();
@@ -400,60 +419,62 @@ const pathToPage = (pathname: string, search: string): ParsedRoute => {
   // --- HOOKS & EFFECTS ---
   useScrollAnimation(currentPage);
 
-
-  //added part : 
+  //added part :
 
   // On first mount, read the current URL and set currentPage/pageData
-useEffect(() => {
-  const { page, data } = pathToPage(window.location.pathname, window.location.search);
-  setCurrentPage(page);
-  // For productDetail we might only have the id in the URL; we will resolve to a full product later
-  if (page === "productDetail" && data?.id) {
-    setPageData(data.id); // temporarily store the id
-  } else {
-    setPageData(data ?? null);
-  }
-  // don't scroll here; let the browser keep position on reload/direct hit
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-
-// If URL says /product/:id and pageData is just an id, map it to the actual product once products are loaded
-useEffect(() => {
-  if (currentPage === "productDetail" && typeof pageData === "string") {
-    const product = products.find((p) => p.id === pageData);
-    if (product) setPageData(product);
-  }
-}, [currentPage, pageData, products]);
-
-// Back/Forward handling: when the user presses the browser buttons, re-derive page from the URL
-useEffect(() => {
-  const onPop = () => {
-    const { page, data } = pathToPage(window.location.pathname, window.location.search);
+  useEffect(() => {
+    const { page, data } = pathToPage(
+      window.location.pathname,
+      window.location.search
+    );
     setCurrentPage(page);
-    // mirror the same product-id handling as initial load
+    // For productDetail we might only have the id in the URL; we will resolve to a full product later
     if (page === "productDetail" && data?.id) {
-      setPageData(data.id);
+      setPageData(data.id); // temporarily store the id
     } else {
       setPageData(data ?? null);
     }
-    window.scrollTo(0, 0);
-  };
-  window.addEventListener("popstate", onPop);
-  return () => window.removeEventListener("popstate", onPop);
-}, []);
+    // don't scroll here; let the browser keep position on reload/direct hit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // If URL says /product/:id and pageData is just an id, map it to the actual product once products are loaded
+  useEffect(() => {
+    if (currentPage === "productDetail" && typeof pageData === "string") {
+      const product = products.find((p) => p.id === pageData);
+      if (product) setPageData(product);
+    }
+  }, [currentPage, pageData, products]);
 
-useEffect(() => {
-  if (currentPage !== "productDetail") return;
-  if (typeof pageData !== "string") return;
+  // Back/Forward handling: when the user presses the browser buttons, re-derive page from the URL
+  useEffect(() => {
+    const onPop = () => {
+      const { page, data } = pathToPage(
+        window.location.pathname,
+        window.location.search
+      );
+      setCurrentPage(page);
+      // mirror the same product-id handling as initial load
+      if (page === "productDetail" && data?.id) {
+        setPageData(data.id);
+      } else {
+        setPageData(data ?? null);
+      }
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
-  const product = products.find(
-    (p: any) => String(p.id ?? p._id) === String(pageData)
-  );
-  if (product) setPageData(product);
-}, [currentPage, pageData, products]);
+  useEffect(() => {
+    if (currentPage !== "productDetail") return;
+    if (typeof pageData !== "string") return;
 
-
+    const product = products.find(
+      (p: any) => String(p.id ?? p._id) === String(pageData)
+    );
+    if (product) setPageData(product);
+  }, [currentPage, pageData, products]);
 
   const isMongoDbId = (id: string): boolean => {
     if (!id) return false;
@@ -502,26 +523,29 @@ useEffect(() => {
       const data = response.data;
 
       const normalizedProducts = (data.products || []).map((p: any) => ({
-  ...p,
-  // Ensure a stable id your components use everywhere
-  id: p.id ?? p._id ?? String(p._id ?? ''),
+        ...p,
+        // Ensure a stable id your components use everywhere
+        id: p.id ?? p._id ?? String(p._id ?? ""),
 
-  // Normalize category to a single string field used by filters/search
-  category:
-    p.category ??
-    p.categoryName ??
-    (typeof p.category === 'object' && p.category?.name ? p.category.name : '') ??
-    '',
-}));
+        // Normalize category to a single string field used by filters/search
+        category:
+          p.category ??
+          p.categoryName ??
+          (typeof p.category === "object" && p.category?.name
+            ? p.category.name
+            : "") ??
+          "",
+      }));
 
-setProducts(normalizedProducts);
+      setProducts(normalizedProducts);
 
-// also make sure categories always have subCategories array
-setCategories((data.categories || []).map((c: any) => ({
-  ...c,
-  subCategories: Array.isArray(c.subCategories) ? c.subCategories : [],
-})));
-
+      // also make sure categories always have subCategories array
+      setCategories(
+        (data.categories || []).map((c: any) => ({
+          ...c,
+          subCategories: Array.isArray(c.subCategories) ? c.subCategories : [],
+        }))
+      );
 
       // setProducts(data.products || []);
       // setCategories(data.categories || []);
@@ -559,8 +583,6 @@ setCategories((data.categories || []).map((c: any) => ({
     }
   }, []);
 
-
-
   const fetchUserData = useCallback(async () => {
     const token = localStorage.getItem("zaina-authToken");
     if (!token || !isLoggedIn) return;
@@ -577,15 +599,19 @@ setCategories((data.categories || []).map((c: any) => ({
       // setUserAddresses(data.addresses || []);
       // setUserSupportTickets(data.supportTickets || []);
 
-      setUserAddresses((data.addresses || []).map((a: any) => ({
-  ...a,
-  id: a.id ?? a._id, // <-- normalize here
-})));
+      setUserAddresses(
+        (data.addresses || []).map((a: any) => ({
+          ...a,
+          id: a.id ?? a._id, // <-- normalize here
+        }))
+      );
 
-setUserSupportTickets((data.supportTickets || []).map((t: any) => ({
-  ...t,
-  id: t.id ?? t._id, // (same idea for tickets)
-})));
+      setUserSupportTickets(
+        (data.supportTickets || []).map((t: any) => ({
+          ...t,
+          id: t.id ?? t._id, // (same idea for tickets)
+        }))
+      );
       setUserPaymentMethods(data.paymentMethods || []);
     } catch (err) {
       console.error("Failed to fetch user dashboard data", err);
@@ -829,80 +855,81 @@ setUserSupportTickets((data.supportTickets || []).map((t: any) => ({
   // );
 
   const navigateToPage = useCallback(
-  async (page: PageName, data: any = null) => {
-    // keep your existing "recently viewed" logic
-    if (page === "productDetail" && (data?.id || data?._id)) {
-      const productId = data.id ?? data._id;
-      setRecentlyViewed((prev) => [productId, ...prev.filter((id) => id !== productId)].slice(0, 10));
-      if (isLoggedIn) {
-        try {
-          const token = localStorage.getItem("zaina-authToken");
-          await axios.post(
-            `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
-            { productId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } catch (error) {
-          console.error("Failed to sync recently viewed item", error);
+    async (page: PageName, data: any = null) => {
+      // keep your existing "recently viewed" logic
+      if (page === "productDetail" && (data?.id || data?._id)) {
+        const productId = data.id ?? data._id;
+        setRecentlyViewed((prev) =>
+          [productId, ...prev.filter((id) => id !== productId)].slice(0, 10)
+        );
+        if (isLoggedIn) {
+          try {
+            const token = localStorage.getItem("zaina-authToken");
+            await axios.post(
+              `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
+              { productId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          } catch (error) {
+            console.error("Failed to sync recently viewed item", error);
+          }
         }
       }
-    }
 
-    // gating: dashboards require auth, bounce to auth
-    if ((page === "userDashboard" || page === "adminDashboard") && !isLoggedIn) {
-      setLoginRedirectTarget({ page, data });
-      setCurrentPage("auth");
-      setPageData(null);
-      const authPath = pageToPath("auth");
-      window.history.pushState({ page: "auth" }, "", authPath);
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    // policy page resolves slug to actual CMS content (keep your logic)
-    if (page === "policy" && data?.slug) {
-      const policyPageContent = cmsPages.find((p) => p.slug === data.slug);
-      if (policyPageContent) {
-        setCurrentPage("policy");
-        setPageData({
-          title: policyPageContent.title,
-          htmlContent: policyPageContent.content,
-        });
-      } else {
-        setCurrentPage("notFound");
+      // gating: dashboards require auth, bounce to auth
+      if (
+        (page === "userDashboard" || page === "adminDashboard") &&
+        !isLoggedIn
+      ) {
+        setLoginRedirectTarget({ page, data });
+        setCurrentPage("auth");
         setPageData(null);
+        const authPath = pageToPath("auth");
+        window.history.pushState({ page: "auth" }, "", authPath);
+        window.scrollTo(0, 0);
+        return;
       }
-    } else {
-      setCurrentPage(page);
-      setPageData(data);
-    }
 
-    // NEW: push a URL so Back/Forward work
-    const newPath = pageToPath(page, data);
-    window.history.pushState({ page, data }, "", newPath);
+      // policy page resolves slug to actual CMS content (keep your logic)
+      if (page === "policy" && data?.slug) {
+        const policyPageContent = cmsPages.find((p) => p.slug === data.slug);
+        if (policyPageContent) {
+          setCurrentPage("policy");
+          setPageData({
+            title: policyPageContent.title,
+            htmlContent: policyPageContent.content,
+          });
+        } else {
+          setCurrentPage("notFound");
+          setPageData(null);
+        }
+      } else {
+        setCurrentPage(page);
+        setPageData(data);
+      }
 
-    window.scrollTo(0, 0);
-  },
-  [isLoggedIn, cmsPages, setLoginRedirectTarget, setRecentlyViewed]
-);
+      // NEW: push a URL so Back/Forward work
+      const newPath = pageToPath(page, data);
+      window.history.pushState({ page, data }, "", newPath);
 
-// Map pageData (which may be an id string or a partial) to a real product from the list
-const getProductFromRoute = (pageData: any, products: any[]) => {
-  if (!pageData) return undefined;
-  // Accept id in multiple shapes: "id", "_id", or the value itself if string
-  const id =
-    typeof pageData === "string"
-      ? pageData
-      : pageData.id ?? pageData._id ?? pageData?.productId;
-
-  if (!id) return undefined;
-
-  return products.find(
-    (p: any) => String(p.id ?? p._id) === String(id)
+      window.scrollTo(0, 0);
+    },
+    [isLoggedIn, cmsPages, setLoginRedirectTarget, setRecentlyViewed]
   );
-};
 
+  // Map pageData (which may be an id string or a partial) to a real product from the list
+  const getProductFromRoute = (pageData: any, products: any[]) => {
+    if (!pageData) return undefined;
+    // Accept id in multiple shapes: "id", "_id", or the value itself if string
+    const id =
+      typeof pageData === "string"
+        ? pageData
+        : pageData.id ?? pageData._id ?? pageData?.productId;
 
+    if (!id) return undefined;
+
+    return products.find((p: any) => String(p.id ?? p._id) === String(id));
+  };
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -1172,49 +1199,59 @@ const getProductFromRoute = (pageData: any, products: any[]) => {
   // };
 
   // App.tsx
-const onUpdateProfile = async (updatedProfile: UserProfile) => {
-  try {
-    const token = localStorage.getItem("zaina-authToken");
+  const onUpdateProfile = async (updatedProfile: UserProfile) => {
+    try {
+      const token = localStorage.getItem("zaina-authToken");
 
-    // 1) Extract ONLY the fields your API allows to update
-    const name = updatedProfile.name?.trim() ?? '';
-    const phone = updatedProfile.phone?.trim() ?? '';
-    const profilePictureUrl = updatedProfile.profilePictureUrl ?? null;
+      // 1) Extract ONLY the fields your API allows to update
+      const name = updatedProfile.name?.trim() ?? "";
+      const phone = updatedProfile.phone?.trim() ?? "";
+      const profilePictureUrl = updatedProfile.profilePictureUrl ?? null;
 
-    // 2) Normalize DOB
-    // profileData.dateOfBirth is from <input type="date"> so it's either '' or 'YYYY-MM-DD'
-    let dateOfBirth: string | number | null = null;
+      // 2) Normalize DOB
+      // profileData.dateOfBirth is from <input type="date"> so it's either '' or 'YYYY-MM-DD'
+      let dateOfBirth: string | number | null = null;
 
-    if (updatedProfile.dateOfBirth && updatedProfile.dateOfBirth.length === 10) {
-      // Prefer ISO; if your backend prefers timestamps, switch to getTime() (see alt below)
-      const iso = new Date(`${updatedProfile.dateOfBirth}T00:00:00.000Z`).toISOString();
-      dateOfBirth = iso;
-    } else {
-      // If empty string or invalid -> null
-      dateOfBirth = null;
+      if (
+        updatedProfile.dateOfBirth &&
+        updatedProfile.dateOfBirth.length === 10
+      ) {
+        // Prefer ISO; if your backend prefers timestamps, switch to getTime() (see alt below)
+        const iso = new Date(
+          `${updatedProfile.dateOfBirth}T00:00:00.000Z`
+        ).toISOString();
+        dateOfBirth = iso;
+      } else {
+        // If empty string or invalid -> null
+        dateOfBirth = null;
+      }
+
+      const payload: any = { name, phone, profilePictureUrl, dateOfBirth };
+
+      // 3) NEVER send email, role, password, joinDate, _id, etc. in this request
+
+      const res = await axios.put(
+        "https://zaina-collection-backend.vercel.app/api/user/profile",
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 4) Update local state with what the server actually saved (best), or with our payload (fallback)
+      setCurrentUser(
+        (prev) =>
+          ({ ...prev, ...(res.data?.profile ?? payload) } as UserProfile)
+      );
+      alert("Profile saved successfully!");
+    } catch (err: any) {
+      // Surface real server message if present
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message;
+      console.error("Update profile failed:", err?.response ?? err);
+      alert(`Failed to save profile: ${serverMsg ?? "Unknown error"}`);
     }
-
-    const payload: any = { name, phone, profilePictureUrl, dateOfBirth };
-
-    // 3) NEVER send email, role, password, joinDate, _id, etc. in this request
-
-    const res = await axios.put(
-      "https://zaina-collection-backend.vercel.app/api/user/profile",
-      payload,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    // 4) Update local state with what the server actually saved (best), or with our payload (fallback)
-    setCurrentUser((prev) => ({ ...prev, ...res.data?.profile ?? payload } as UserProfile));
-    alert("Profile saved successfully!");
-  } catch (err: any) {
-    // Surface real server message if present
-    const serverMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
-    console.error("Update profile failed:", err?.response ?? err);
-    alert(`Failed to save profile: ${serverMsg ?? "Unknown error"}`);
-  }
-};
-
+  };
 
   const onChangePassword = async (passwords: {
     current: string;
@@ -1259,38 +1296,37 @@ const onUpdateProfile = async (updatedProfile: UserProfile) => {
   // };
 
   // App.tsx
-const onSaveAddress = async (address: Address) => {
-  try {
-    const token = localStorage.getItem("zaina-authToken");
-    const headers = { Authorization: `Bearer ${token}` };
+  const onSaveAddress = async (address: Address) => {
+    try {
+      const token = localStorage.getItem("zaina-authToken");
+      const headers = { Authorization: `Bearer ${token}` };
 
-    const isUpdating = Boolean(address.id) && isMongoDbId(String(address.id)); // robust check
+      const isUpdating = Boolean(address.id) && isMongoDbId(String(address.id)); // robust check
 
-    if (isUpdating) {
-      // Avoid sending id in the body if your API expects it only in the URL
-      const { id, ...payload } = address as any;
-      await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/user/addresses/${id}`,
-        payload,
-        { headers }
-      );
-    } else {
-      // New address: do not send a fabricated id
-      const { id, ...payload } = address as any;
-      await axios.post(
-        `https://zaina-collection-backend.vercel.app/api/user/addresses`,
-        payload,
-        { headers }
-      );
+      if (isUpdating) {
+        // Avoid sending id in the body if your API expects it only in the URL
+        const { id, ...payload } = address as any;
+        await axios.put(
+          `https://zaina-collection-backend.vercel.app/api/user/addresses/${id}`,
+          payload,
+          { headers }
+        );
+      } else {
+        // New address: do not send a fabricated id
+        const { id, ...payload } = address as any;
+        await axios.post(
+          `https://zaina-collection-backend.vercel.app/api/user/addresses`,
+          payload,
+          { headers }
+        );
+      }
+
+      // Re-fetch (or optimistically update if you prefer)
+      await fetchUserData();
+    } catch (err) {
+      alert("Failed to save address.");
     }
-
-    // Re-fetch (or optimistically update if you prefer)
-    await fetchUserData();
-  } catch (err) {
-    alert("Failed to save address.");
-  }
-};
-
+  };
 
   const onDeleteAddress = async (addressId: string) => {
     try {
@@ -1329,35 +1365,34 @@ const onSaveAddress = async (address: Address) => {
   // };
 
   // App.tsx
-const onSaveSupportTicket = async (ticket: SupportTicket) => {
-  try {
-    const token = localStorage.getItem("zaina-authToken");
-    const headers = { Authorization: `Bearer ${token}` };
+  const onSaveSupportTicket = async (ticket: SupportTicket) => {
+    try {
+      const token = localStorage.getItem("zaina-authToken");
+      const headers = { Authorization: `Bearer ${token}` };
 
-    const isUpdating = Boolean(ticket.id) && isMongoDbId(String(ticket.id));
+      const isUpdating = Boolean(ticket.id) && isMongoDbId(String(ticket.id));
 
-    if (isUpdating) {
-      const { id, ...payload } = ticket as any;
-      await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${id}`,
-        payload,
-        { headers }
-      );
-    } else {
-      const { id, ...payload } = ticket as any;
-      await axios.post(
-        `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
-        payload,
-        { headers }
-      );
+      if (isUpdating) {
+        const { id, ...payload } = ticket as any;
+        await axios.put(
+          `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${id}`,
+          payload,
+          { headers }
+        );
+      } else {
+        const { id, ...payload } = ticket as any;
+        await axios.post(
+          `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
+          payload,
+          { headers }
+        );
+      }
+
+      await fetchUserData();
+    } catch (err) {
+      alert("Failed to save support ticket.");
     }
-
-    await fetchUserData();
-  } catch (err) {
-    alert("Failed to save support ticket.");
-  }
-};
-
+  };
 
   // --- ADMIN HANDLERS ---
   const onSaveProduct = async (productData: Product) => {
@@ -1893,15 +1928,20 @@ const onSaveSupportTicket = async (ticket: SupportTicket) => {
           <ShopPage
             products={products}
             categories={categories}
+            initialCategorySlug={pageData?.categorySlug}
+            initialSearchTerm={pageData?.searchTerm}
             onProductQuickView={handleQuickView}
             onProductQuickShop={handleQuickShop}
-            onViewProductDetail={(p) => navigateToPage("productDetail", p)}
-            initialCategory={pageData?.category}
-            initialSearchTerm={pageData?.searchTerm}
+            onViewProductDetail={(p) =>
+              navigateToPage("productDetail", { id: p.id ?? p._id })
+            }
             onToggleWishlist={toggleWishlist}
-            isProductInWishlist={isProductInWishlist}
+            isProductInWishlist={(id) => wishlist.includes(String(id))}
             onToggleCompare={toggleCompare}
-            isProductInCompare={isProductInCompare}
+            isProductInCompare={(id) =>
+              compareList.some((pp) => String(pp.id ?? pp._id) === String(id))
+            }
+            navigateToPage={navigateToPage}
           />
         );
       case "productDetail":
@@ -1909,16 +1949,18 @@ const onSaveSupportTicket = async (ticket: SupportTicket) => {
           recentlyViewed.includes(p.id)
         );
 
-          const product = getProductFromRoute(pageData, products);
+        const product = getProductFromRoute(pageData, products);
 
-  // While products are loading or we haven't matched the id yet, show a lightweight loader
-  if (!product) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <span className="animate-pulse text-gray-500">Loading product…</span>
-      </div>
-    );
-  }
+        // While products are loading or we haven't matched the id yet, show a lightweight loader
+        if (!product) {
+          return (
+            <div className="min-h-[50vh] flex items-center justify-center">
+              <span className="animate-pulse text-gray-500">
+                Loading product…
+              </span>
+            </div>
+          );
+        }
         return pageData ? (
           <ProductDetailPage
             product={pageData}
@@ -2162,34 +2204,34 @@ const onSaveSupportTicket = async (ticket: SupportTicket) => {
     }
   };
 
-if (!siteSettings) {
-  return (
-    <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
-      <div className="relative flex items-center justify-center">
-        {/* Spinning border */}
-        <Loader2 className="absolute w-24 h-24 animate-spin text-zaina-blue" />
+  if (!siteSettings) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
+        <div className="relative flex items-center justify-center">
+          {/* Spinning border */}
+          <Loader2 className="absolute w-24 h-24 animate-spin text-zaina-blue" />
 
-        {/* Show logo only when loaded */}
-        {imageLoaded ? (
-          <img
-            src="/logo2.png"
-            alt="Zaina Logo"
-            className="w-16 h-16 rounded-full shadow-lg"
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-gray-200" /> // placeholder circle
-        )}
+          {/* Show logo only when loaded */}
+          {imageLoaded ? (
+            <img
+              src="/logo2.png"
+              alt="Zaina Logo"
+              className="w-16 h-16 rounded-full shadow-lg"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gray-200" /> // placeholder circle
+          )}
+        </div>
+        <p className="mt-4 text-gray-700 font-medium text-lg">
+          Loading Zaina Collection...
+        </p>
       </div>
-      <p className="mt-4 text-gray-700 font-medium text-lg">
-        Loading Zaina Collection...
-      </p>
-    </div>
-  );
-}
-
+    );
+  }
 
   const isHomePage = currentPage === "home";
   const pageContainerClass = `page-content ${isHomePage ? "is-home" : ""}`;
+
 
   return (
     <>
@@ -2202,18 +2244,24 @@ if (!siteSettings) {
         wishlistItemCount={wishlist.length}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
-        storeName={siteSettings.storeSettings.name}
-        headerLinks={siteSettings.headerLinks}
-        logoUrl={siteSettings.storeSettings.logoUrl}
+        storeName={siteSettings?.storeSettings?.name || ZAINA_BRAND_NAME}
+        headerLinks={
+          siteSettings?.headerLinks || defaultSiteSettings.headerLinks
+        }
+        logoUrl={siteSettings?.storeSettings?.logoUrl}
         products={products}
+        categories={categories}
       />
-      <main className={pageContainerClass}>
-        <ErrorBoundary onHome={() => navigateToPage("home")}>
-        {renderPage()}
+     // App.tsx
+<main
+  className={pageContainerClass}
+  style={{ paddingTop: 'var(--header-total-height)' }}
+>
+  <ErrorBoundary onHome={() => navigateToPage("home")}>
+    {renderPage()}
+  </ErrorBoundary>
+</main>
 
-        </ErrorBoundary>
-        
-        </main>
 
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <Footer

@@ -16,6 +16,8 @@ export interface Brand {
 export interface Category {
   id:string;
   name: string;
+  slug : string;
+  parentId?: string | null;
   subCategories: Category[];
 }
 

@@ -284,7 +284,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                 <img
                   src={slide.imageUrl || "/placeholder.svg"}
                   alt={slide.title || `Hero slide ${index + 1}`}
-                  className="w-full h-full object-cover object-center md:object-right"
+                  className="w-full h-full object-cover md:object-right"
                   loading={index === 0 ? "eager" : "lazy"}
                 />
                 <div className="absolute inset-0 bg-black/10"></div>
