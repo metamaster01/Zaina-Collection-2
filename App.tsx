@@ -2253,14 +2253,35 @@ export function App(): React.ReactElement {
         categories={categories}
       />
      // App.tsx
-<main
+{/* <main
   className={pageContainerClass}
-  style={{ paddingTop: 'var(--header-total-height)' }}
+  style={{
+    // Header.tsx sets --header-total-height dynamically
+    paddingTop: 'var(--header-total-height, 112px)',
+    marginTop: 0,
+  }}
 >
   <ErrorBoundary onHome={() => navigateToPage("home")}>
     {renderPage()}
   </ErrorBoundary>
+</main> */}
+
+
+<main
+  className={pageContainerClass}
+  style={{
+    paddingTop: "var(--header-total-height)",
+    isolation: "isolate",           // stops first-child margin from collapsing up
+  }}
+>
+  <ErrorBoundary onHome={() => navigateToPage("home")}>
+    {renderPage()}
+  </ErrorBoundary>
+
+
+  <style>{`:root{--header-total-height:120px}`}</style>
 </main>
+
 
 
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (

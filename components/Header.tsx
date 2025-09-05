@@ -1186,18 +1186,18 @@ useLayoutEffect(() => {
   }, []);
 
   // Outside clicks
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
-        setShowUserDropdown(false);
-      }
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
+  // useEffect(() => {
+  //   const onDown = (e: MouseEvent) => {
+  //     if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+  //       setShowUserDropdown(false);
+  //     }
+  //     if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+  //       setShowSuggestions(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", onDown);
+  //   return () => document.removeEventListener("mousedown", onDown);
+  // }, []);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
   const toggleMobileSearch = () => setIsMobileSearchOpen((v) => !v);
@@ -1303,7 +1303,7 @@ useLayoutEffect(() => {
   };
 
   const CategoryRail = () => (
-    <div className="bg-white border-b relative">
+    <div className="bg-white border-b  relative">
       <div className="max-w-[1240px] mx-auto">
         <div className="relative">
           {/* left/right nudge buttons (hidden if not needed on small screens) */}
@@ -1362,7 +1362,7 @@ useLayoutEffect(() => {
   );
 
   return (
-    <>
+    <div>
       <header
         ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-50 flex flex-col bg-white transition-shadow ${
@@ -1372,7 +1372,7 @@ useLayoutEffect(() => {
         <PromoBar />
 
         {/* main bar (slimmer) */}
-        <div className="hidden md:flex items-center justify-between h-[64px] px-6 lg:px-8">
+        <div className="hidden md:flex items-center justify-between h-[70px] px-6 lg:px-8">
           {/* left: logo + primary nav */}
           <div className="flex items-center gap-8">
             <a href="#" onClick={handleLogoClick} className="flex-shrink-0 hover:opacity-80">
@@ -1638,7 +1638,7 @@ useLayoutEffect(() => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-    </>
+    </div>
   );
 };
 
