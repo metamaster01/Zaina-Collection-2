@@ -1932,9 +1932,10 @@ export function App(): React.ReactElement {
             initialSearchTerm={pageData?.searchTerm}
             onProductQuickView={handleQuickView}
             onProductQuickShop={handleQuickShop}
-            onViewProductDetail={(p) =>
-              navigateToPage("productDetail", { id: p.id ?? p._id })
-            }
+            // onViewProductDetail={(p) =>
+            //   navigateToPage("productDetail", { id: p.id ?? p._id })
+            // }
+            onViewProductDetail={(p) => navigateToPage("productDetail", p)}
             onToggleWishlist={toggleWishlist}
             isProductInWishlist={(id) => wishlist.includes(String(id))}
             onToggleCompare={toggleCompare}

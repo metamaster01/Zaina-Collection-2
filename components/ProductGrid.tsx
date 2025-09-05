@@ -193,14 +193,25 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                   onQuickView={() => onProductQuickView(product)}
                   onQuickShop={() => onProductQuickShop(product)}
                   onCardClick={() => onProductCardClick?.(product)}
+                  onProductCardClick={() => onProductCardClick?.(product)}
                   onToggleWishlist={onToggleWishlist}
                   isInWishlist={
                     isProductInWishlist?.(
                       String((product as any).id ?? (product as any)._id)
                     ) ?? false
                   }
+                  isWishlisted={
+                    isProductInWishlist?.(
+                      String((product as any).id ?? (product as any)._id)
+                    ) ?? false
+                  }
                   onToggleCompare={onToggleCompare}
                   isInCompare={
+                    isProductInCompare?.(
+                      String((product as any).id ?? (product as any)._id)
+                    ) ?? false
+                  }
+                  isCompared={
                     isProductInCompare?.(
                       String((product as any).id ?? (product as any)._id)
                     ) ?? false

@@ -1438,7 +1438,7 @@ const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
       </script>
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8">
-        <nav className="bg-white border-b border-gray-200 pb-8 hidden md:block">
+        {/* <nav className="bg-white border-b border-gray-200 pb-8 hidden md:block">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center py-4 space-x-8">
               <a
@@ -1485,7 +1485,7 @@ const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
               </a>
             </div>
           </div>
-        </nav>
+        </nav> */}
         {/* Breadcrumb */}
         <nav
           aria-label="Breadcrumb"

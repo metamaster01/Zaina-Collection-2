@@ -243,7 +243,7 @@ type Props = {
   categories: Category[];
   onProductQuickView: (product: Product) => void;
   onProductQuickShop: (product: Product) => void;
-  onViewProductDetail: (product: Product) => void;
+  onViewProductDetail? : (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
   isProductInWishlist: (id: string) => boolean;
   onToggleCompare: (product: Product) => void;
@@ -305,11 +305,11 @@ const ShopPage: React.FC<Props> = (props) => {
   } = props;
 
   const [activeSlug, setActiveSlug] = useState<string | undefined>(initialCategorySlug);
-const [resolvedBanner, setResolvedBanner] = useState<string>("/banners/new-arrival.png");
+const [resolvedBanner, setResolvedBanner] = useState<string>("/new-arrival.png");
 useEffect(() => {
   (async () => {
     const target = bannerSrcFor(activeSlug);
-    const fallback = "/banners/new-arrival.png";
+    const fallback = "/new-arrival.png";
     // try .png first, then .jpg, else fallback
     const candidates = [target, target.replace(".png", ".jpg")];
     for (const src of candidates) {
@@ -509,7 +509,7 @@ const pillItems = [
         title={`${pageTitle} | Zaina Collection`}
         description={pageDescription}
         canonical={canonical}
-        ogImage={bannerSrcFor}
+        ogImage={resolvedBanner}
         jsonLd={{ "@graph": [breadcrumbLd, collectionLd] }}
       />
 
