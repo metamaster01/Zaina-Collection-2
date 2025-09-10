@@ -209,16 +209,13 @@
 
 // export default ShopPage;
 
-
 // src/pages/ShopPage.tsx
-import React, { useEffect, useMemo, useState , useRef} from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 
 import SEO from "../SEO";
 import { Product, Category, PageName } from "../../types";
 import { slugify, findCategoryBySlug } from "../utils/slugs";
 import ProductGrid from "../ProductGrid";
-
-
 
 const imgExists = (src: string) =>
   new Promise<boolean>((resolve) => {
@@ -243,7 +240,7 @@ type Props = {
   categories: Category[];
   onProductQuickView: (product: Product) => void;
   onProductQuickShop: (product: Product) => void;
-  onViewProductDetail? : (product: Product) => void;
+  onViewProductDetail?: (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
   isProductInWishlist: (id: string) => boolean;
   onToggleCompare: (product: Product) => void;
@@ -254,9 +251,7 @@ type Props = {
   // If your grid is a separate component, import and use it here:
 
   // ProductGrid: React.ComponentType<...>  (or just use <ProductGrid /> directly)
-  
 };
-
 
 const productMatchesCategorySlug = (p: Product, slug?: string) => {
   if (!slug) return true;
@@ -264,14 +259,21 @@ const productMatchesCategorySlug = (p: Product, slug?: string) => {
   // Special categories
   if (slug === specialSlugs.newArrivals) {
     // adapt to your flags/tags
-    return !!(p as any).isNew || (p.tags || []).some((t: string) => /new/i.test(t));
+    return (
+      !!(p as any).isNew || (p.tags || []).some((t: string) => /new/i.test(t))
+    );
   }
   if (slug === specialSlugs.bestSellers) {
-    return !!(p as any).isBestSeller || (p.tags || []).some((t: string) => /best/i.test(t));
+    return (
+      !!(p as any).isBestSeller ||
+      (p.tags || []).some((t: string) => /best/i.test(t))
+    );
   }
   if (slug === specialSlugs.sale) {
     const hasDiscount =
-      (!!(p as any).mrp && !!(p as any).price && (p as any).price < (p as any).mrp) ||
+      (!!(p as any).mrp &&
+        !!(p as any).price &&
+        (p as any).price < (p as any).mrp) ||
       (!!(p as any).discountPercentage && (p as any).discountPercentage > 0) ||
       (p.tags || []).some((t: string) => /sale|discount/i.test(t));
     return !!hasDiscount;
@@ -286,7 +288,6 @@ const bannerSrcFor = (slug?: string) => {
   if (!slug) return "/new-arrival.png";
   return `/${slug}.png`; // fallback image names as per your assets
 };
-
 
 const ShopPage: React.FC<Props> = (props) => {
   const {
@@ -304,66 +305,78 @@ const ShopPage: React.FC<Props> = (props) => {
     navigateToPage,
   } = props;
 
-  const [activeSlug, setActiveSlug] = useState<string | undefined>(initialCategorySlug);
-const [resolvedBanner, setResolvedBanner] = useState<string>("/new-arrival.png");
-useEffect(() => {
-  (async () => {
-    const target = bannerSrcFor(activeSlug);
-    const fallback = "/new-arrival.png";
-    // try .png first, then .jpg, else fallback
-    const candidates = [target, target.replace(".png", ".jpg")];
-    for (const src of candidates) {
-      if (await imgExists(src)) {
-        setResolvedBanner(src);
-        return;
-      }
-    }
-    setResolvedBanner(fallback);
-  })();
-}, [activeSlug]);
-
-const CategoryBanner: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
-  const [loaded, setLoaded] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState(0);
-
-  // subtle parallax (max 12px translate)
+  const [activeSlug, setActiveSlug] = useState<string | undefined>(
+    initialCategorySlug
+  );
+  const [resolvedBanner, setResolvedBanner] =
+    useState<string>("/new-arrival.png");
   useEffect(() => {
-    const onScroll = () => {
-      if (!wrapRef.current) return;
-      const rect = wrapRef.current.getBoundingClientRect();
-      // when banner is on screen, drift slower than scroll
-      const progress = Math.min(1, Math.max(0, (window.innerHeight - rect.top) / (window.innerHeight + rect.height)));
-      setOffset(Math.round((progress - 0.5) * 24)); // -12..+12px
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    (async () => {
+      const target = bannerSrcFor(activeSlug);
+      const fallback = "/new-arrival.png";
+      // try .png first, then .jpg, else fallback
+      const candidates = [target, target.replace(".png", ".jpg")];
+      for (const src of candidates) {
+        if (await imgExists(src)) {
+          setResolvedBanner(src);
+          return;
+        }
+      }
+      setResolvedBanner(fallback);
+    })();
+  }, [activeSlug]);
 
-  return (
-    <div ref={wrapRef} className="relative w-full h-auto bg-white">
-      {/* skeleton while loading */}
-      {/* <div className={`absolute inset-0 transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}>
+  const CategoryBanner: React.FC<{ src: string; alt: string }> = ({
+    src,
+    alt,
+  }) => {
+    const [loaded, setLoaded] = useState(false);
+    const wrapRef = useRef<HTMLDivElement>(null);
+    const [offset, setOffset] = useState(0);
+
+    // subtle parallax (max 12px translate)
+    useEffect(() => {
+      const onScroll = () => {
+        if (!wrapRef.current) return;
+        const rect = wrapRef.current.getBoundingClientRect();
+        // when banner is on screen, drift slower than scroll
+        const progress = Math.min(
+          1,
+          Math.max(
+            0,
+            (window.innerHeight - rect.top) / (window.innerHeight + rect.height)
+          )
+        );
+        setOffset(Math.round((progress - 0.5) * 24)); // -12..+12px
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
+    return (
+      <div ref={wrapRef} className="relative w-full h-auto bg-white">
+        {/* skeleton while loading */}
+        {/* <div className={`absolute inset-0 transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}>
         <div className="h-[220px] md:h-[550px] bg-gray-100 animate-pulse" />
       </div> */}
 
-      {/* banner image */}
-      <picture>
-        <img
-          src={src}
-          alt={alt}
-          style={{ transform: `translateY(${offset}px)` }}
-          className={`block w-full h-[250px] md:h-[550px] object-cover object-center select-none transition-opacity duration-500 ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
-          onLoad={() => setLoaded(true)}
-          draggable={false}
-        />
-      </picture>
-    </div>
-  );
-};
+        {/* banner image */}
+        <picture>
+          <img
+            src={src}
+            alt={alt}
+            style={{ transform: `translateY(${offset}px)` }}
+            className={`block w-full h-[250px] md:h-[550px] object-cover object-center select-none transition-opacity duration-500 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
+            onLoad={() => setLoaded(true)}
+            draggable={false}
+          />
+        </picture>
+      </div>
+    );
+  };
 
   // Derive active category data / texts
   const matchedCat = useMemo(
@@ -381,11 +394,16 @@ const CategoryBanner: React.FC<{ src: string; alt: string }> = ({ src, alt }) =>
   }, [initialSearchTerm, matchedCat, activeSlug]);
 
   const pageDescription = useMemo(() => {
-    if (initialSearchTerm) return `Explore "${initialSearchTerm}" across our latest Zaina Collection picks.`;
-    if (matchedCat?.name) return `Explore ${matchedCat.name} from Zaina Collection — premium styles curated for you.`;
-    if (activeSlug === specialSlugs.newArrivals) return "Fresh arrivals, handpicked for your wardrobe.";
-    if (activeSlug === specialSlugs.bestSellers) return "Our best-selling styles loved by customers.";
-    if (activeSlug === specialSlugs.sale) return "Limited-time offers on selected pieces — don’t miss out!";
+    if (initialSearchTerm)
+      return `Explore "${initialSearchTerm}" across our latest Zaina Collection picks.`;
+    if (matchedCat?.name)
+      return `Explore ${matchedCat.name} from Zaina Collection — premium styles curated for you.`;
+    if (activeSlug === specialSlugs.newArrivals)
+      return "Fresh arrivals, handpicked for your wardrobe.";
+    if (activeSlug === specialSlugs.bestSellers)
+      return "Our best-selling styles loved by customers.";
+    if (activeSlug === specialSlugs.sale)
+      return "Limited-time offers on selected pieces — don’t miss out!";
     return "Discover exquisite ethnic wear, curated for the modern woman.";
   }, [initialSearchTerm, matchedCat, activeSlug]);
 
@@ -395,16 +413,13 @@ const CategoryBanner: React.FC<{ src: string; alt: string }> = ({ src, alt }) =>
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [initialCategorySlug]);
 
-    useEffect(() => {
+  useEffect(() => {
     (async () => {
       if (!activeSlug) {
         setResolvedBanner("/new-arrival.png");
         return;
       }
-      const candidates = [
-        `/${activeSlug}.jpg`,
-        `/${activeSlug}.png`,
-      ];
+      const candidates = [`/${activeSlug}.jpg`, `/${activeSlug}.png`];
       for (const src of candidates) {
         if (await imgExists(src)) {
           setResolvedBanner(src);
@@ -418,22 +433,21 @@ const CategoryBanner: React.FC<{ src: string; alt: string }> = ({ src, alt }) =>
   const specialSet = new Set(Object.values(specialSlugs));
 
   const categoryPills = (categories ?? [])
-  // remove any category that collides with a special slug
-  .filter((c) => c?.slug && !specialSet.has(c.slug))
-  // avoid accidental dupes in your data
-  .filter((c, i, arr) => arr.findIndex(x => x.slug === c.slug) === i)
-  .map((c) => ({ label: c.name, slug: c.slug! }));
-
+    // remove any category that collides with a special slug
+    .filter((c) => c?.slug && !specialSet.has(c.slug))
+    // avoid accidental dupes in your data
+    .filter((c, i, arr) => arr.findIndex((x) => x.slug === c.slug) === i)
+    .map((c) => ({ label: c.name, slug: c.slug! }));
 
   // Build pills (All + specials + categories)
-const pillItems = [
-  { label: "All", slug: undefined },
-  { label: "New Arrivals", slug: specialSlugs.newArrivals },
-  { label: "Best Sellers", slug: specialSlugs.bestSellers },
-  { label: "Sale", slug: specialSlugs.sale },
-  ...categoryPills,
-  { label: "Track Order", slug: "#track-order-pill#" }, // non-category
-];
+  const pillItems = [
+    { label: "All", slug: undefined },
+    { label: "New Arrivals", slug: specialSlugs.newArrivals },
+    { label: "Best Sellers", slug: specialSlugs.bestSellers },
+    { label: "Sale", slug: specialSlugs.sale },
+    ...categoryPills,
+    { label: "Track Order", slug: "#track-order-pill#" }, // non-category
+  ];
 
   // const filteredProducts = useMemo(() => {
   //   const base = (products || []).filter((p: any) =>
@@ -452,38 +466,60 @@ const pillItems = [
   // }, [products, initialSearchTerm, activeSlug]);
 
   const filteredProducts = useMemo(() => {
-  const list = Array.isArray(products) ? products : [];
+    const list = Array.isArray(products) ? products : [];
 
-  // keep only published (or when field is absent)
-  const base = list.filter((p: any) => {
-    const s = p?.publishStatus;
-    return !s || String(s).toLowerCase() === "published";
-  });
+    // keep only published (or when field is absent)
+    const base = list.filter((p: any) => {
+      const s = p?.publishStatus;
+      return !s || String(s).toLowerCase() === "published";
+    });
 
-  if (initialSearchTerm?.trim()) {
-    const q = initialSearchTerm.toLowerCase();
-    return base.filter(
-      (p: any) =>
-        String(p?.name || "").toLowerCase().includes(q) ||
-        String(p?.description || "").toLowerCase().includes(q) ||
-        (Array.isArray(p?.tags) && p.tags.some((t: string) => String(t).toLowerCase().includes(q)))
-    );
-  }
+    if (initialSearchTerm?.trim()) {
+      const q = initialSearchTerm.toLowerCase();
+      return base.filter(
+        (p: any) =>
+          String(p?.name || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(p?.description || "")
+            .toLowerCase()
+            .includes(q) ||
+          (Array.isArray(p?.tags) &&
+            p.tags.some((t: string) => String(t).toLowerCase().includes(q)))
+      );
+    }
 
-  return base.filter((p) => productMatchesCategorySlug(p, activeSlug));
-}, [products, initialSearchTerm, activeSlug]);
-
+    return base.filter((p) => productMatchesCategorySlug(p, activeSlug));
+  }, [products, initialSearchTerm, activeSlug]);
 
   // SEO (JSON-LD)
-  const canonical = typeof window !== "undefined" ? window.location.href : undefined;
+  const canonical =
+    typeof window !== "undefined" ? window.location.href : undefined;
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin || ""}/` },
-      { "@type": "ListItem", "position": 2, "name": "Shop", "item": `${window.location.origin || ""}/shop` },
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${window.location.origin || ""}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: `${window.location.origin || ""}/shop`,
+      },
       ...(activeSlug
-        ? [{ "@type": "ListItem", "position": 3, "name": pageTitle, "item": canonical }]
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: pageTitle,
+              item: canonical,
+            },
+          ]
         : []),
     ],
   };
@@ -491,20 +527,20 @@ const pillItems = [
   const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": pageTitle,
-    "description": pageDescription,
-    "url": canonical,
-    "isPartOf": {
+    name: pageTitle,
+    description: pageDescription,
+    url: canonical,
+    isPartOf: {
       "@type": "WebSite",
-      "name": "Zaina Collection",
-      "url": window.location.origin || ""
-    }
+      name: "Zaina Collection",
+      url: window.location.origin || "",
+    },
   };
 
   // const bannerSrc = getBannerForSlug(activeSlug);
 
   return (
-    <div className='overflow-hidden bg-white'>
+    <div className="overflow-hidden bg-white">
       <SEO
         title={`${pageTitle} | Zaina Collection`}
         description={pageDescription}
@@ -533,8 +569,7 @@ background: resolvedBanner
       </section> */}
 
       {/* Banner (white bg, no text) */}
-<CategoryBanner src={resolvedBanner} alt={pageTitle} />
-
+      <CategoryBanner src={resolvedBanner} alt={pageTitle} />
 
       {/* Category Pills */}
       {/* <div style={{ background: "#fff", borderBottom: "1px dashed #E1E4EA" }}>
@@ -707,19 +742,18 @@ background: resolvedBanner
       </section> */}
 
       <ProductGrid
-  title={pageTitle || "Shop"}
-  products={filteredProducts}                 // <-- pass the array to show
-  onProductQuickView={onProductQuickView}
-  onProductQuickShop={onProductQuickShop}
-  onProductCardClick={onViewProductDetail}
-  sectionBgColor="bg-transparent"
-  titleColor="text-zaina-text-primary dark:text-dark-zaina-text-primary"
-  onToggleWishlist={onToggleWishlist}
-  isProductInWishlist={isProductInWishlist}
-  onToggleCompare={onToggleCompare}
-  isProductInCompare={isProductInCompare}
-/>
-
+        title={pageTitle || "Shop"}
+        products={filteredProducts} // <-- pass the array to show
+        onProductQuickView={onProductQuickView}
+        onProductQuickShop={onProductQuickShop}
+        onProductCardClick={onViewProductDetail}
+        sectionBgColor="bg-transparent"
+        titleColor="text-zaina-text-primary dark:text-dark-zaina-text-primary"
+        onToggleWishlist={onToggleWishlist}
+        isProductInWishlist={isProductInWishlist}
+        onToggleCompare={onToggleCompare}
+        isProductInCompare={isProductInCompare}
+      />
     </div>
   );
 };

@@ -251,7 +251,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
   return (
     <section
-      className="relative min-h-[60vh] h-[70vh] md:h-screen w-full overflow-hidden group/hero"
+      className="relative min-h-[60vh] h-[70vh] md:h-screen lg:min-h-[80vh] w-full overflow-hidden group/hero"
       aria-label="Hero Showcase"
     >
       <Swiper
