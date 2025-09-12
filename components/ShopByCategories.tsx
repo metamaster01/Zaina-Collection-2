@@ -104,14 +104,14 @@ const ShopByCategories = () => {
     {
       id: 2,
       name: "Suits & Gowns",
-      image: "/category2.png",
+      image: "/category3.png",
       bgColor: "bg-gray-200",
       link: "/shop/gowns-and-suits",
     },
     {
       id: 3,
       name: "Sarees",
-      image: "/category3.png",
+      image: "/category2.png",
       bgColor: "bg-gradient-to-br from-red-500 to-orange-400",
       link: "/shop/sarees",
     },

@@ -232,7 +232,7 @@ const MOBILE_BANNER_H = 210;
 const specialSlugs = {
   newArrivals: "new-arrival",
   bestSellers: "best-sellers",
-  sale: "sale",
+  // sale: "sale",
 };
 
 type Props = {
@@ -269,15 +269,15 @@ const productMatchesCategorySlug = (p: Product, slug?: string) => {
       (p.tags || []).some((t: string) => /best/i.test(t))
     );
   }
-  if (slug === specialSlugs.sale) {
-    const hasDiscount =
-      (!!(p as any).mrp &&
-        !!(p as any).price &&
-        (p as any).price < (p as any).mrp) ||
-      (!!(p as any).discountPercentage && (p as any).discountPercentage > 0) ||
-      (p.tags || []).some((t: string) => /sale|discount/i.test(t));
-    return !!hasDiscount;
-  }
+  // if (slug === specialSlugs.sale) {
+  //   const hasDiscount =
+  //     (!!(p as any).mrp &&
+  //       !!(p as any).price &&
+  //       (p as any).price < (p as any).mrp) ||
+  //     (!!(p as any).discountPercentage && (p as any).discountPercentage > 0) ||
+  //     (p.tags || []).some((t: string) => /sale|discount/i.test(t));
+  //   return !!hasDiscount;
+  // }
 
   // Normal categories use product.category string
   return slugify((p as any).category) === slug;
@@ -389,7 +389,7 @@ const ShopPage: React.FC<Props> = (props) => {
     if (matchedCat?.name) return matchedCat.name;
     if (activeSlug === specialSlugs.newArrivals) return "New Arrivals";
     if (activeSlug === specialSlugs.bestSellers) return "Best Sellers";
-    if (activeSlug === specialSlugs.sale) return "Sale";
+    // if (activeSlug === specialSlugs.sale) return "Sale";
     return "Shop Our Collection";
   }, [initialSearchTerm, matchedCat, activeSlug]);
 
@@ -402,8 +402,8 @@ const ShopPage: React.FC<Props> = (props) => {
       return "Fresh arrivals, handpicked for your wardrobe.";
     if (activeSlug === specialSlugs.bestSellers)
       return "Our best-selling styles loved by customers.";
-    if (activeSlug === specialSlugs.sale)
-      return "Limited-time offers on selected pieces — don’t miss out!";
+    // if (activeSlug === specialSlugs.sale)
+    //   return "Limited-time offers on selected pieces — don’t miss out!";
     return "Discover exquisite ethnic wear, curated for the modern woman.";
   }, [initialSearchTerm, matchedCat, activeSlug]);
 
@@ -444,7 +444,7 @@ const ShopPage: React.FC<Props> = (props) => {
     { label: "All", slug: undefined },
     { label: "New Arrivals", slug: specialSlugs.newArrivals },
     { label: "Best Sellers", slug: specialSlugs.bestSellers },
-    { label: "Sale", slug: specialSlugs.sale },
+    // { label: "Sale", slug: specialSlugs.sale },
     ...categoryPills,
     { label: "Track Order", slug: "#track-order-pill#" }, // non-category
   ];
