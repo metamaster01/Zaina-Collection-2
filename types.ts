@@ -51,6 +51,7 @@ export interface Product {
   modelImageUrl?: string; 
   isNew?: boolean;
   isBestSeller?: boolean;
+  isJewellery?: boolean;
   rating?: number; 
   category: string;
   subCategory?: string;

@@ -169,6 +169,7 @@ const AdminBulkUploadSection: React.FC<AdminBulkUploadSectionProps> = ({ product
                     imageUrl: row.imageurl || '',
                     isNew: true,
                     isBestSeller: false,
+                    isJewellery: false,
                     id: `prod_${Date.now()}_${i}` 
                 };
 

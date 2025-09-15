@@ -244,7 +244,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* New / Best Seller */}
-        {(product.isNew || product.isBestSeller) && (
+        {(product.isNew || product.isBestSeller || product.isJewellery) && (
           <span
             className={`absolute bottom-3 left-3 text-xs font-medium px-3 py-1 rounded-full ${
               product.isBestSeller ? "bg-pink-400 text-white" : "bg-blue-500 text-white"

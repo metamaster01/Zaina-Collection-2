@@ -398,6 +398,10 @@ const AdminAddProductSection: React.FC<AdminAddProductSectionProps> = ({ product
                                     <input type="checkbox" name="isBestSeller" checked={product.isBestSeller || false} onChange={handleInputChange} className="h-4 w-4 rounded text-admin-accent focus:ring-admin-accent"/>
                                     <span className="ml-2">Mark as Best Seller</span>
                                 </label>
+                                 <label className="flex items-center text-sm">
+                                    <input type="checkbox" name="isJewellery" checked={product.isJewellery || false} onChange={handleInputChange} className="h-4 w-4 rounded text-admin-accent focus:ring-admin-accent"/>
+                                    <span className="ml-2">Mark as Jewellery</span>
+                                </label>
                              </div>
                         </div>
                     </div>
