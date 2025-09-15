@@ -91,6 +91,7 @@ import { useScrollAnimation } from "./hooks/useScrollAnimation";
 import PromotionBanner from "./components/PromotionBanner";
 import ShopByCategories from "./components/ShopByCategories";
 import ErrorBoundary from "./errorBoundary";
+import JewellerySection from "./components/jewellerySection";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -1908,6 +1909,19 @@ export function App(): React.ReactElement {
               onToggleCompare={toggleCompare}
               isProductInCompare={isProductInCompare}
             />
+                <JewellerySection
+      title="Jewellery Collection"
+      products={products} // your global product list from state
+      onProductQuickView={handleQuickView}
+      onProductQuickShop={handleQuickShop}
+      onProductCardClick={(p) => navigateToPage("productDetail", p)}
+      sectionBgColor="bg-white"
+      titleColor="text-gray-900"
+      onToggleWishlist={toggleWishlist}
+      isProductInWishlist={isProductInWishlist}
+      onToggleCompare={toggleCompare}
+      isProductInCompare={isProductInCompare}
+    />
             <PromotionBanner />
             <ShopByOccasion
               occasions={occasions}

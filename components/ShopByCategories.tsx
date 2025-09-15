@@ -120,7 +120,7 @@ const ShopByCategories = () => {
       name: "Jwellery",
       image: "/category4.png",
       bgColor: "bg-gray-200",
-      link: "#",
+      link: "/shop/jewellery",
     },
   ]
 

@@ -1236,12 +1236,12 @@ const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
   };
   const stockInfo = getStockMessage();
 
-  const addToCartDisabled =
-    !currentVariant || (currentVariant?.stockQuantity ?? 0) === 0;
-  const buyNowDisabled =
-    isProcessing ||
-    !currentVariant ||
-    (currentVariant?.stockQuantity ?? 0) === 0;
+  // const addToCartDisabled =
+  //   !currentVariant || (currentVariant?.stockQuantity ?? 0) === 0;
+  // const buyNowDisabled =
+  //   isProcessing ||
+  //   !currentVariant ||
+  //   (currentVariant?.stockQuantity ?? 0) === 0;
 
   const breadcrumbCategory = {
     label: product.category,
@@ -1700,14 +1700,14 @@ const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
 
               <button
                 onClick={handleAddToCartClick}
-                disabled={addToCartDisabled}
+                // disabled={addToCartDisabled}
                 className="w-full bg-blue-600 text-white py-3 md:py-3 rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm md:text-base"
               >
                 Add to cart
               </button>
               <button
                 onClick={handleBuyNowClick}
-                disabled={buyNowDisabled}
+                // disabled={buyNowDisabled}
                 className="w-full bg-zaina-gold text-zaina-white dark:text-dark-zaina-text-primary font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? "Processing..." : "Buy Now"}
@@ -1843,7 +1843,7 @@ const mrpFixed    = money(mrpToShow, 2);                // e.g., "2499.00"
           onAddToCart={handleFloatingBarAddToCart}
           onClose={handleFloatingBarClose}
           isVisible={true}
-          isAddToCartDisabled={addToCartDisabled}
+          // isAddToCartDisabled={addToCartDisabled}
         />
       )}
 
