@@ -90,6 +90,7 @@ model Product {
   subCategoryName     String?
   isNew               Boolean          @default(false)
   isBestSeller        Boolean          @default(false)
+  isJewellery         Boolean          @default(false)
   rating              Float?
   stockQuantity       Int?
   publishStatus       String           @default("Draft") // Draft, Published, Hidden
