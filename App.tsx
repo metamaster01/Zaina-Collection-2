@@ -2285,16 +2285,17 @@ export function App(): React.ReactElement {
 <main
   className={pageContainerClass}
   style={{
-    paddingTop: "var(--header-total-height)",
+    paddingTop: "117px",
     isolation: "isolate",           // stops first-child margin from collapsing up
   }}
+
 >
   <ErrorBoundary onHome={() => navigateToPage("home")}>
     {renderPage()}
   </ErrorBoundary>
 
+  {/* <style>{`:root{--header-total-height:100px}`}</style> */}
 
-  <style>{`:root{--header-total-height:120px}`}</style>
 </main>
 
 
