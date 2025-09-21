@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Notification, PageName } from '../../../types';
 import BellIcon from '../../icons/BellIcon';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminNotificationsSectionProps {
   onNotificationClick: (page: PageName, data?: any) => void;
@@ -27,7 +27,7 @@ const AdminNotificationsSection: React.FC<AdminNotificationsSectionProps> = ({ o
     setIsLoading(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/notifications`, {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/notifications`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);
@@ -45,7 +45,7 @@ const AdminNotificationsSection: React.FC<AdminNotificationsSectionProps> = ({ o
   const onMarkAllRead = async () => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/notifications/mark-all-read`, {}, {
+        await axios.post(`${API_BASE_URL}/api/admin/notifications/mark-all-read`, {}, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(prev => prev.map(n => ({ ...n, seen: true })));

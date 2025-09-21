@@ -6,7 +6,7 @@ import EditIcon from '../../icons/EditIcon';
 import TrashIcon from '../../icons/TrashIcon';
 import Modal from '../../shared/Modal';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminProductManagementSectionProps {
   onEditProduct: (product: Product) => void;
@@ -26,7 +26,7 @@ const AdminProductManagementSection: React.FC<AdminProductManagementSectionProps
     setError(null);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/products/all`, {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/products/all`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setProducts(response.data);
@@ -44,7 +44,7 @@ const AdminProductManagementSection: React.FC<AdminProductManagementSectionProps
   const onUpdateStatus = async (productId: string, status: Product['publishStatus']) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.put(`https://zaina-collection-backend.vercel.app/api/admin/products/${productId}/status`, { status }, {
+        await axios.put(`${API_BASE_URL}/api/admin/products/${productId}/status`, { status }, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setProducts(prev => prev.map(p => p.id === productId ? {...p, publishStatus: status} : p));
@@ -56,7 +56,7 @@ const AdminProductManagementSection: React.FC<AdminProductManagementSectionProps
   const onDeleteProduct = async (productId: string) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.delete(`https://zaina-collection-backend.vercel.app/api/admin/products/${productId}`, {
+        await axios.delete(`${API_BASE_URL}/api/admin/products/${productId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setProducts(prev => prev.filter(p => p.id !== productId));

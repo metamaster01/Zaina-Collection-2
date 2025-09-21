@@ -36,7 +36,7 @@ export const DEFAULT_USER_ID = 'user123';
 
 // *** IMPORTANT ***
 // This is now only used for assets served with the application, not product media.
-export const MEDIA_BASE_URL = 'https://zaina-collection.vercel.app'; 
+export const MEDIA_BASE_URL = 'https://zaina-collection.com'; 
 
 export const USER_DASHBOARD_NAV_LINKS: NavLinkItem[] = [
     { id: 'profile', type: 'link', label: 'My Profile', href: '#profile', icon: UserIcon, order: 1, visible: true },

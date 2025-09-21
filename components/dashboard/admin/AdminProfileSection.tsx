@@ -4,7 +4,7 @@ import axios from 'axios';
 import { UserProfile } from '../../../types';
 import InputField from '../../shared/InputField';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminProfileSectionProps {
   user: UserProfile | null;
@@ -40,7 +40,7 @@ const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ user: initial
   const onSave = async (updatedUser: UserProfile) => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        await axios.put(`https://zaina-collection-backend.vercel.app/api/user/profile`, updatedUser, {
+        await axios.put(`${API_BASE_URL}/api/user/profile`, updatedUser, {
             headers: { Authorization: `Bearer ${token}` }
         });
         alert('Profile saved successfully!');
@@ -52,7 +52,7 @@ const AdminProfileSection: React.FC<AdminProfileSectionProps> = ({ user: initial
   const onChangePassword = async (passwords: { current: string; new: string }): Promise<{ success: boolean; message: string }> => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.put(`https://zaina-collection-backend.vercel.app/api/user/change-password`, passwords, {
+        const response = await axios.put(`${API_BASE_URL}/api/user/change-password`, passwords, {
              headers: { Authorization: `Bearer ${token}` }
         });
         return { success: true, message: response.data.message };

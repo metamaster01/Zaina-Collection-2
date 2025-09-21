@@ -262,6 +262,9 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = (props) => {
     onDeleteFloatingInfo,
   } = props;
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
   const [activeTab, setActiveTab] = useState(initialSection || "dashboard");
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
@@ -302,7 +305,7 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = (props) => {
     try {
       const token = localStorage.getItem("zaina-authToken");
       const res = await axios.get(
-        `https://zaina-collection-backend.vercel.app/api/admin/orders/${summary.id}`,
+        `${API_BASE_URL}/api/admin/orders/${summary.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setViewingOrder(res.data); // ← full order (with items)

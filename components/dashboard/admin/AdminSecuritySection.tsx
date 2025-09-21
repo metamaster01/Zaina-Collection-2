@@ -7,7 +7,7 @@ import InputField from '../../shared/InputField';
 import Modal from '../../shared/Modal';
 import QrCodeIcon from '../../icons/QrCodeIcon';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminSecuritySectionProps {}
 
@@ -24,7 +24,7 @@ const AdminSecuritySection: React.FC<AdminSecuritySectionProps> = () => {
     setIsLoading(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/logs`, {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/logs`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         setActivityLogs(response.data);

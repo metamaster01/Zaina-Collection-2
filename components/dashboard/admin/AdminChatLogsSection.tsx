@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface ChatMessage {
     id: string;
@@ -28,7 +28,7 @@ const AdminChatLogsSection: React.FC = () => {
     const fetchSessions = async () => {
         try {
             const token = localStorage.getItem('zaina-authToken');
-            const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/chats`, {
+            const response = await axios.get(`${API_BASE_URL}/api/admin/chats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSessions(response.data);
@@ -53,7 +53,7 @@ const AdminChatLogsSection: React.FC = () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('zaina-authToken');
-            const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/chats/${session.id}/messages`, {
+            const response = await axios.get(`${API_BASE_URL}/api/admin/chats/${session.id}/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessages(response.data);
@@ -79,7 +79,7 @@ const AdminChatLogsSection: React.FC = () => {
 
         try {
             const token = localStorage.getItem('zaina-authToken');
-            await axios.post(`https://zaina-collection-backend.vercel.app/api/admin/chats/${selectedSession.id}/messages`, 
+            await axios.post(`${API_BASE_URL}/api/admin/chats/${selectedSession.id}/messages`, 
                 { text: newMessage },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

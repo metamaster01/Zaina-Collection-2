@@ -7,7 +7,7 @@ import PlusCircleIcon from '../../icons/PlusCircleIcon';
 import EditIcon from '../../icons/EditIcon';
 import TrashIcon from '../../icons/TrashIcon';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminFloatingInfoSectionProps {
   items: FloatingInfo[];

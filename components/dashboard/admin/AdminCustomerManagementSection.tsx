@@ -8,7 +8,7 @@ import MessageSquareIcon from '../../icons/MessageSquareIcon';
 import SlashIcon from '../../icons/SlashIcon'; 
 import CheckCircleIcon from '../../icons/CheckCircleIcon'; 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 interface AdminCustomerManagementSectionProps {
   customers: Customer[];
   onViewDetails: (customer: Customer) => void;

@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import axios from "axios";
 import { HelmetProvider } from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
+
 // import SEO from "./components/SEO";
 import { slugify } from "./components/utils/slugs";
 
@@ -29,20 +31,27 @@ import ShopByOccasion from "./components/ShopByOccasion";
 import InstagramBanner from "./components/InstagramBanner";
 
 // Pages
-import ShopPage from "./components/pages/ShopPage";
-import { ProductDetailPage } from "./components/pages/ProductDetailPage";
-import AboutUsPage from "./components/pages/AboutUsPage";
-import ContactPage from "./components/pages/ContactPage";
-import AuthPage from "./components/pages/AuthPage";
-import CartPage from "./components/pages/CartPage";
-import { CheckoutPage } from "./components/pages/CheckoutPage";
-import PolicyPage from "./components/pages/PolicyPage";
-import UserDashboardPage from "./components/pages/UserDashboardPage";
-import AdminDashboardPage from "./components/pages/AdminDashboardPage";
-import BlogIndexPage from "./components/pages/BlogIndexPage";
-import BlogPostPage from "./components/pages/BlogPostPage";
+const AdminDashboardPage = lazy(
+  () => import("./components/pages/AdminDashboardPage")
+);
+const ShopPage = lazy(() => import("./components/pages/ShopPage"));
+const ProductDetailPage = lazy(
+  () => import("./components/pages/ProductDetailPage")
+);
+const AboutUsPage = lazy(() => import("./components/pages/AboutUsPage"));
+const ContactPage = lazy(() => import("./components/pages/ContactPage"));
+const AuthPage = lazy(() => import("./components/pages/AuthPage"));
+const CartPage = lazy(() => import("./components/pages/CartPage"));
+const CheckoutPage = lazy(() => import("./components/pages/CheckoutPage"));
+const PolicyPage = lazy(() => import("./components/pages/PolicyPage"));
+const UserDashboardPage = lazy(
+  () => import("./components/pages/UserDashboardPage")
+);
+const BlogIndexPage = lazy(() => import("./components/pages/BlogIndexPage"));
+const BlogPostPage = lazy(() => import("./components/pages/BlogPostPage"));
 import NotFoundPage from "./components/pages/NotFoundPage";
-import { Loader2 } from "lucide-react";
+
+// import { Loader2 } from "lucide-react";
 
 // Constants and Types
 import { ZAINA_BRAND_NAME, INITIAL_FOOTER_SETTINGS } from "./constants";
@@ -93,7 +102,7 @@ import ShopByCategories from "./components/ShopByCategories";
 import ErrorBoundary from "./errorBoundary";
 import JewellerySection from "./components/jewellerySection";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const defaultSiteSettings: SiteSettingsBundle = {
   storeSettings: {
@@ -364,9 +373,16 @@ export function App(): React.ReactElement {
     []
   );
   const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [siteSettings, setSiteSettings] = useState<SiteSettingsBundle | null>(
-    null
-  );
+  // initialize siteSettings from localStorage fallback to defaultSiteSettings
+  const [siteSettings, setSiteSettings] = useState<SiteSettingsBundle>(() => {
+    try {
+      const cached = localStorage.getItem("zaina-siteSettings");
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.warn("Failed to read cached siteSettings:", e);
+    }
+    return defaultSiteSettings; // use your already-declared default as immediate UI
+  });
 
   // --- USER-SPECIFIC DATA STATE ---
   const [userOrders, setUserOrders] = useState<Order[]>([]);
@@ -516,80 +532,168 @@ export function App(): React.ReactElement {
     }
   }, [recentlyViewed, isLoggedIn]);
 
-  const fetchInitialData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `https://zaina-collection-backend.vercel.app/api/site-data`
-      );
-      const data = response.data;
+// 1) Tiny, first-paint fetch (logo/theme/seo)
+const fetchPublicSettingsFirst = useCallback(async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/site-settings-public`);
+    const tiny = res.data || {};
 
-      const normalizedProducts = (data.products || []).map((p: any) => ({
-        ...p,
-        // Ensure a stable id your components use everywhere
-        id: p.id ?? p._id ?? String(p._id ?? ""),
+    // merge into site settings immediately and persist
+    setSiteSettings(prev => {
+      const merged = { ...prev, ...tiny };
+      try { localStorage.setItem("zaina-siteSettings", JSON.stringify(merged)); } catch {}
+      return merged;
+    });
+  } catch (e) {
+    // Use defaults if this fails; don't block UI
+    console.warn("Public settings fetch failed; using defaults.", e);
+  }
+}, []);
 
-        // Normalize category to a single string field used by filters/search
-        category:
-          p.category ??
-          p.categoryName ??
-          (typeof p.category === "object" && p.category?.name
-            ? p.category.name
-            : "") ??
-          "",
-      }));
 
-      setProducts(normalizedProducts);
 
-      // also make sure categories always have subCategories array
-      setCategories(
-        (data.categories || []).map((c: any) => ({
-          ...c,
-          subCategories: Array.isArray(c.subCategories) ? c.subCategories : [],
-        }))
-      );
+  // const fetchInitialData = useCallback(async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${API_BASE_URL}/api/site-data`
+  //     );
+  //     const data = response.data;
 
-      // setProducts(data.products || []);
-      // setCategories(data.categories || []);
+  //     const normalizedProducts = (data.products || []).map((p: any) => ({
+  //       ...p,
+  //       // Ensure a stable id your components use everywhere
+  //       id: p.id ?? p._id ?? String(p._id ?? ""),
 
-      setHeroSlides(data.heroSlides || []);
-      setOccasions(data.occasions || []);
-      setLooks(data.looks || []);
-      setEmotions(data.emotions || []);
-      setShoppableVideos(data.shoppableVideos || []);
-      setTestimonials(data.testimonials || []);
-      setGuidedDiscoveryPaths(data.guidedDiscoveryPaths || []);
-      setFashionGalleryImages(data.fashionGalleryImages || []);
-      setCmsPages(data.cmsPages || []);
-      setActivityFeed(data.activityFeed || []);
-      setFloatingInfo(data.floatingInfo || []);
-      setFaqs(data.faqs || []);
+  //       // Normalize category to a single string field used by filters/search
+  //       category:
+  //         p.category ??
+  //         p.categoryName ??
+  //         (typeof p.category === "object" && p.category?.name
+  //           ? p.category.name
+  //           : "") ??
+  //         "",
+  //     }));
 
-      if (data.siteSettings) {
-        setSiteSettings(data.siteSettings);
-      } else {
-        console.warn(
-          "No site settings received from backend. Using default settings."
+  //     setProducts(normalizedProducts);
+
+  //     // also make sure categories always have subCategories array
+  //     setCategories(
+  //       (data.categories || []).map((c: any) => ({
+  //         ...c,
+  //         subCategories: Array.isArray(c.subCategories) ? c.subCategories : [],
+  //       }))
+  //     );
+
+  //     // setProducts(data.products || []);
+  //     // setCategories(data.categories || []);
+
+  //     setHeroSlides(data.heroSlides || []);
+  //     setOccasions(data.occasions || []);
+  //     setLooks(data.looks || []);
+  //     setEmotions(data.emotions || []);
+  //     setShoppableVideos(data.shoppableVideos || []);
+  //     setTestimonials(data.testimonials || []);
+  //     setGuidedDiscoveryPaths(data.guidedDiscoveryPaths || []);
+  //     setFashionGalleryImages(data.fashionGalleryImages || []);
+  //     setCmsPages(data.cmsPages || []);
+  //     setActivityFeed(data.activityFeed || []);
+  //     setFloatingInfo(data.floatingInfo || []);
+  //     setFaqs(data.faqs || []);
+
+  //     if (data.siteSettings) {
+  //       setSiteSettings((prev) => ({ ...prev, ...data.siteSettings }));
+  //       try {
+  //         localStorage.setItem(
+  //           "zaina-siteSettings",
+  //           JSON.stringify({ ...siteSettings, ...data.siteSettings })
+  //         );
+  //       } catch (e) {
+  //         console.warn("Failed to cache siteSettings:", e);
+  //       }
+  //     } else {
+  //       console.warn(
+  //         "No site settings received from backend. Using default settings."
+  //       );
+  //       setSiteSettings(defaultSiteSettings);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch initial site data from backend:", error);
+  //     alert(
+  //       "Could not load site data. Please ensure the backend server is running and try refreshing the page."
+  //     );
+  //     console.warn(
+  //       "Using default site settings as a fallback after API failure."
+  //     );
+  //     setSiteSettings(defaultSiteSettings);
+  //   }
+  // }, []);
+
+  // 2) Heavy data fetch (runs after first paint; cached on server)
+const fetchInitialData = useCallback(async () => {
+  try {
+    axios
+      .get(`${API_BASE_URL}/api/site-data`)
+      .then((response) => {
+        const data = response.data || {};
+
+        // --- products (normalize ids/categories) ---
+        const normalizedProducts = (data.products || []).map((p: any) => ({
+          ...p,
+          id: p?.id ?? p?._id ?? String(p?._id ?? ""),
+          category:
+            p?.category ??
+            p?.categoryName ??
+            (typeof p?.category === "object" && p?.category?.name ? p.category.name : "") ??
+            "",
+        }));
+        setProducts(normalizedProducts);
+
+        // --- categories (ensure subCategories array) ---
+        setCategories(
+          (data.categories || []).map((c: any) => ({
+            ...c,
+            subCategories: Array.isArray(c?.subCategories) ? c.subCategories : [],
+          }))
         );
-        setSiteSettings(defaultSiteSettings);
-      }
-    } catch (error) {
-      console.error("Failed to fetch initial site data from backend:", error);
-      alert(
-        "Could not load site data. Please ensure the backend server is running and try refreshing the page."
-      );
-      console.warn(
-        "Using default site settings as a fallback after API failure."
-      );
-      setSiteSettings(defaultSiteSettings);
-    }
-  }, []);
+
+        // --- homepage content ---
+        setHeroSlides(data.heroSlides || []);
+        setOccasions(data.occasions || []);
+        setLooks(data.looks || []);
+        setEmotions(data.emotions || []);
+        setShoppableVideos(data.shoppableVideos || []);
+        setTestimonials(data.testimonials || []);
+        setGuidedDiscoveryPaths(data.guidedDiscoveryPaths || []);
+        setFashionGalleryImages(data.fashionGalleryImages || []);
+        setCmsPages(data.cmsPages || []);
+        setActivityFeed(data.activityFeed || []);
+        setFloatingInfo(data.floatingInfo || []);
+        setFaqs(data.faqs || []);
+
+        // --- site settings merge + persist ---
+        if (data.siteSettings) {
+          setSiteSettings(prev => {
+            const merged = { ...prev, ...data.siteSettings };
+            try { localStorage.setItem("zaina-siteSettings", JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Heavy site-data fetch failed:", error);
+      });
+  } catch (error) {
+    // No-op: handled in .catch above
+  }
+}, []);
+
 
   const fetchUserData = useCallback(async () => {
     const token = localStorage.getItem("zaina-authToken");
     if (!token || !isLoggedIn) return;
     try {
       const response = await axios.get(
-        `https://zaina-collection-backend.vercel.app/api/user/dashboard-data`,
+        `${API_BASE_URL}/api/user/dashboard-data`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -637,55 +741,55 @@ export function App(): React.ReactElement {
         paymentGatewaysRes,
       ] = await Promise.all([
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/dashboard-all`,
+          `${API_BASE_URL}/api/admin/dashboard-all`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/reviews`,
+          `${API_BASE_URL}/api/admin/reviews`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/faqs`,
+          `${API_BASE_URL}/api/admin/faqs`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/categories`,
+          `${API_BASE_URL}/api/admin/categories`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`,
+          `${API_BASE_URL}/api/admin/variant-attributes`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/analytics/wishlist`,
+          `${API_BASE_URL}/api/admin/analytics/wishlist`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/shipping/zones`,
+          `${API_BASE_URL}/api/admin/shipping/zones`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/shipping/providers`,
+          `${API_BASE_URL}/api/admin/shipping/providers`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
         axios.get(
-          `https://zaina-collection-backend.vercel.app/api/admin/payments/gateways`,
+          `${API_BASE_URL}/api/admin/payments/gateways`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -716,9 +820,30 @@ export function App(): React.ReactElement {
     }
   }, []);
 
-  useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+  // useEffect(() => {
+  //   fetchInitialData();
+  // }, [fetchInitialData]);
+
+  // 3) Mount effect: paint fast, then hydrate heavy data when idle
+useEffect(() => {
+  // Step 1: tiny settings → instant header/theme/logo
+  fetchPublicSettingsFirst();
+
+  // Step 2: hydrate the rest after first paint
+  const id =
+    (window as any).requestIdleCallback
+      ? (window as any).requestIdleCallback(() => fetchInitialData())
+      : window.setTimeout(() => fetchInitialData(), 0);
+
+  return () => {
+    if ((window as any).cancelIdleCallback) {
+      (window as any).cancelIdleCallback(id);
+    } else {
+      clearTimeout(id as number);
+    }
+  };
+}, [fetchPublicSettingsFirst, fetchInitialData]);
+
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -811,7 +936,7 @@ export function App(): React.ReactElement {
   //         try {
   //           const token = localStorage.getItem("zaina-authToken");
   //           await axios.post(
-  //             `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
+  //             `${API_BASE_URL}/api/user/recently-viewed`,
   //             { productId },
   //             { headers: { Authorization: `Bearer ${token}` } }
   //           );
@@ -867,7 +992,7 @@ export function App(): React.ReactElement {
           try {
             const token = localStorage.getItem("zaina-authToken");
             await axios.post(
-              `https://zaina-collection-backend.vercel.app/api/user/recently-viewed`,
+              `${API_BASE_URL}/api/user/recently-viewed`,
               { productId },
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -942,7 +1067,7 @@ export function App(): React.ReactElement {
     try {
       console.log(API_BASE_URL);
       const response = await axios.post(
-        `https://zaina-collection-backend.vercel.app/api/auth/login`,
+        `${API_BASE_URL}/api/auth/login`,
         credentials
       );
       const { token, user } = response.data;
@@ -974,7 +1099,7 @@ export function App(): React.ReactElement {
   }): Promise<{ success: boolean; error?: string }> => {
     try {
       await axios.post(
-        `https://zaina-collection-backend.vercel.app/api/auth/register`,
+        `${API_BASE_URL}/api/auth/register`,
         credentials
       );
       // Automatically log in after successful registration
@@ -1084,7 +1209,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       const response = await axios.post(
-        `https://zaina-collection-backend.vercel.app/api/orders`,
+        `${API_BASE_URL}/api/orders`,
         { order, guestDetails },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -1132,7 +1257,7 @@ export function App(): React.ReactElement {
         try {
           const token = localStorage.getItem("zaina-authToken");
           await axios.post(
-            `https://zaina-collection-backend.vercel.app/api/user/wishlist/toggle`,
+            `${API_BASE_URL}/api/user/wishlist/toggle`,
             { productId },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -1188,7 +1313,7 @@ export function App(): React.ReactElement {
   //   const payload = { ...updatedProfile, dateOfBirth: dob };
 
   //     await axios.put(
-  //       `https://zaina-collection-backend.vercel.app/api/user/profile`,
+  //       `${API_BASE_URL}/api/user/profile`,
   //       updatedProfile,
   //       { headers: { Authorization: `Bearer ${token}` } }
   //     );
@@ -1232,7 +1357,7 @@ export function App(): React.ReactElement {
       // 3) NEVER send email, role, password, joinDate, _id, etc. in this request
 
       const res = await axios.put(
-        "https://zaina-collection-backend.vercel.app/api/user/profile",
+        "${API_BASE_URL}/api/user/profile",
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1261,7 +1386,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       const response = await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/user/change-password`,
+        `${API_BASE_URL}/api/user/change-password`,
         passwords,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1279,13 +1404,13 @@ export function App(): React.ReactElement {
   //     const token = localStorage.getItem("zaina-authToken");
   //     if (userAddresses.some((a) => a.id === address.id)) {
   //       await axios.put(
-  //         `https://zaina-collection-backend.vercel.app/api/user/addresses/${address.id}`,
+  //         `${API_BASE_URL}/api/user/addresses/${address.id}`,
   //         address,
   //         { headers: { Authorization: `Bearer ${token}` } }
   //       );
   //     } else {
   //       await axios.post(
-  //         `https://zaina-collection-backend.vercel.app/api/user/addresses`,
+  //         `${API_BASE_URL}/api/user/addresses`,
   //         address,
   //         { headers: { Authorization: `Bearer ${token}` } }
   //       );
@@ -1308,7 +1433,7 @@ export function App(): React.ReactElement {
         // Avoid sending id in the body if your API expects it only in the URL
         const { id, ...payload } = address as any;
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/user/addresses/${id}`,
+          `${API_BASE_URL}/api/user/addresses/${id}`,
           payload,
           { headers }
         );
@@ -1316,7 +1441,7 @@ export function App(): React.ReactElement {
         // New address: do not send a fabricated id
         const { id, ...payload } = address as any;
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/user/addresses`,
+          `${API_BASE_URL}/api/user/addresses`,
           payload,
           { headers }
         );
@@ -1333,7 +1458,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       await axios.delete(
-        `https://zaina-collection-backend.vercel.app/api/user/addresses/${addressId}`,
+        `${API_BASE_URL}/api/user/addresses/${addressId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchUserData();
@@ -1348,13 +1473,13 @@ export function App(): React.ReactElement {
   //     const token = localStorage.getItem("zaina-authToken");
   //     if (userSupportTickets.some((t) => t.id === ticket.id)) {
   //       await axios.put(
-  //         `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${ticket.id}`,
+  //         `${API_BASE_URL}/api/user/support-tickets/${ticket.id}`,
   //         ticket,
   //         { headers: { Authorization: `Bearer ${token}` } }
   //       );
   //     } else {
   //       await axios.post(
-  //         `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
+  //         `${API_BASE_URL}/api/user/support-tickets`,
   //         ticket,
   //         { headers: { Authorization: `Bearer ${token}` } }
   //       );
@@ -1376,14 +1501,14 @@ export function App(): React.ReactElement {
       if (isUpdating) {
         const { id, ...payload } = ticket as any;
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/user/support-tickets/${id}`,
+          `${API_BASE_URL}/api/user/support-tickets/${id}`,
           payload,
           { headers }
         );
       } else {
         const { id, ...payload } = ticket as any;
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/user/support-tickets`,
+          `${API_BASE_URL}/api/user/support-tickets`,
           payload,
           { headers }
         );
@@ -1405,7 +1530,7 @@ export function App(): React.ReactElement {
 
       if (isUpdating) {
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/admin/products/${productData.id}`,
+          `${API_BASE_URL}/api/admin/products/${productData.id}`,
           productData,
           { headers }
         );
@@ -1414,7 +1539,7 @@ export function App(): React.ReactElement {
         // For new products, remove the temporary ID before sending
         const { id, ...payload } = productData;
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/admin/products`,
+          `${API_BASE_URL}/api/admin/products`,
           payload,
           { headers }
         );
@@ -1452,13 +1577,13 @@ export function App(): React.ReactElement {
 
       if (isUpdating) {
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/admin/categories/${category.id}`,
+          `${API_BASE_URL}/api/admin/categories/${category.id}`,
           payload,
           { headers }
         );
       } else {
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/admin/categories`,
+          `${API_BASE_URL}/api/admin/categories`,
           payload,
           { headers }
         );
@@ -1487,14 +1612,14 @@ export function App(): React.ReactElement {
 
   //     if (isUpdating) {
   //       await axios.put(
-  //         `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${attribute.id}`,
+  //         `${API_BASE_URL}/api/admin/variant-attributes/${attribute.id}`,
   //         attribute,
   //         { headers }
   //       );
   //     } else {
   //       const { id, ...payload } = attribute;
   //       await axios.post(
-  //         `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`,
+  //         `${API_BASE_URL}/api/admin/variant-attributes`,
   //         payload,
   //         { headers }
   //       );
@@ -1529,14 +1654,14 @@ export function App(): React.ReactElement {
       if (isMongoId(id)) {
         // UPDATE
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${id}`,
+          `${API_BASE_URL}/api/admin/variant-attributes/${id}`,
           payload, // { name, values }
           { headers }
         );
       } else {
         // CREATE
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes`,
+          `${API_BASE_URL}/api/admin/variant-attributes`,
           payload, // { name, values }
           { headers }
         );
@@ -1602,14 +1727,14 @@ export function App(): React.ReactElement {
         const isUpdating = item.id && isMongoDbId(item.id);
         if (isUpdating) {
           await axios.put(
-            `https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}/${item.id}`,
+            `${API_BASE_URL}/api/admin/content/${endpoint}/${item.id}`,
             item,
             { headers: { Authorization: `Bearer ${token}` } }
           );
         } else {
           const { id, ...payload } = item;
           await axios.post(
-            `https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}`,
+            `${API_BASE_URL}/api/admin/content/${endpoint}`,
             payload,
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -1629,7 +1754,7 @@ export function App(): React.ReactElement {
       try {
         const token = localStorage.getItem("zaina-authToken");
         await axios.delete(
-          `https://zaina-collection-backend.vercel.app/api/admin/content/${endpoint}/${itemId}`,
+          `${API_BASE_URL}/api/admin/content/${endpoint}/${itemId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         alert(`${itemType} deleted successfully!`);
@@ -1649,14 +1774,14 @@ export function App(): React.ReactElement {
         const isUpdating = item.id && isMongoDbId(item.id);
         if (isUpdating) {
           await axios.put(
-            `https://zaina-collection-backend.vercel.app/api/admin/${endpoint}/${item.id}`,
+            `${API_BASE_URL}/api/admin/${endpoint}/${item.id}`,
             item,
             { headers: { Authorization: `Bearer ${token}` } }
           );
         } else {
           const { id, ...payload } = item;
           await axios.post(
-            `https://zaina-collection-backend.vercel.app/api/admin/${endpoint}`,
+            `${API_BASE_URL}/api/admin/${endpoint}`,
             payload,
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -1683,7 +1808,7 @@ export function App(): React.ReactElement {
       try {
         const token = localStorage.getItem("zaina-authToken");
         await axios.delete(
-          `https://zaina-collection-backend.vercel.app/api/admin/${endpoint}/${itemId}`,
+          `${API_BASE_URL}/api/admin/${endpoint}/${itemId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         alert(`${itemType} deleted successfully!`);
@@ -1720,14 +1845,14 @@ export function App(): React.ReactElement {
       const isUpdating = coupon.id && isMongoDbId(coupon.id);
       if (isUpdating) {
         await axios.put(
-          `https://zaina-collection-backend.vercel.app/api/admin/coupons/${coupon.id}`,
+          `${API_BASE_URL}/api/admin/coupons/${coupon.id}`,
           coupon,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         const { id, ...payload } = coupon;
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/admin/coupons`,
+          `${API_BASE_URL}/api/admin/coupons`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -1749,7 +1874,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       await axios.delete(
-        `https://zaina-collection-backend.vercel.app/api/admin/coupons/${couponId}`,
+        `${API_BASE_URL}/api/admin/coupons/${couponId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Coupon deleted.");
@@ -1769,7 +1894,7 @@ export function App(): React.ReactElement {
       try {
         const token = localStorage.getItem("zaina-authToken");
         const presignedRes = await axios.get(
-          `https://zaina-collection-backend.vercel.app/api/media/presigned-url`,
+          `${API_BASE_URL}/api/media/presigned-url`,
           {
             params: { fileName: file.name, fileType: file.type },
             headers: { Authorization: `Bearer ${token}` },
@@ -1783,7 +1908,7 @@ export function App(): React.ReactElement {
         });
 
         await axios.post(
-          `https://zaina-collection-backend.vercel.app/api/admin/media`,
+          `${API_BASE_URL}/api/admin/media`,
           {
             name: file.name,
             url: fileUrl,
@@ -1812,7 +1937,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       await axios.delete(
-        `https://zaina-collection-backend.vercel.app/api/admin/media/${fileId}`,
+        `${API_BASE_URL}/api/admin/media/${fileId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Media deleted successfully.");
@@ -1830,7 +1955,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/admin/settings/site`,
+        `${API_BASE_URL}/api/admin/settings/site`,
         settings,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1851,7 +1976,7 @@ export function App(): React.ReactElement {
     try {
       const token = localStorage.getItem("zaina-authToken");
       const res = await axios.put(
-        `https://zaina-collection-backend.vercel.app/api/admin/orders/${orderId}/status`,
+        `${API_BASE_URL}/api/admin/orders/${orderId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1909,19 +2034,19 @@ export function App(): React.ReactElement {
               onToggleCompare={toggleCompare}
               isProductInCompare={isProductInCompare}
             />
-                <JewellerySection
-      title="Jewellery Collection"
-      products={products} // your global product list from state
-      onProductQuickView={handleQuickView}
-      onProductQuickShop={handleQuickShop}
-      onProductCardClick={(p) => navigateToPage("productDetail", p)}
-      sectionBgColor="bg-white"
-      titleColor="text-gray-900"
-      onToggleWishlist={toggleWishlist}
-      isProductInWishlist={isProductInWishlist}
-      onToggleCompare={toggleCompare}
-      isProductInCompare={isProductInCompare}
-    />
+            <JewellerySection
+              title="Jewellery Collection"
+              products={products} // your global product list from state
+              onProductQuickView={handleQuickView}
+              onProductQuickShop={handleQuickShop}
+              onProductCardClick={(p) => navigateToPage("productDetail", p)}
+              sectionBgColor="bg-white"
+              titleColor="text-gray-900"
+              onToggleWishlist={toggleWishlist}
+              isProductInWishlist={isProductInWishlist}
+              onToggleCompare={toggleCompare}
+              isProductInCompare={isProductInCompare}
+            />
             <PromotionBanner />
             <ShopByOccasion
               occasions={occasions}
@@ -2107,7 +2232,7 @@ export function App(): React.ReactElement {
               try {
                 const token = localStorage.getItem("zaina-authToken");
                 await axios.delete(
-                  `https://zaina-collection-backend.vercel.app/api/admin/categories/${id}`,
+                  `${API_BASE_URL}/api/admin/categories/${id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -2133,7 +2258,7 @@ export function App(): React.ReactElement {
               try {
                 const token = localStorage.getItem("zaina-authToken");
                 await axios.delete(
-                  `https://zaina-collection-backend.vercel.app/api/admin/variant-attributes/${id}`,
+                  `${API_BASE_URL}/api/admin/variant-attributes/${id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -2219,34 +2344,34 @@ export function App(): React.ReactElement {
     }
   };
 
-  if (!siteSettings) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
-        <div className="relative flex items-center justify-center">
-          {/* Spinning border */}
-          <Loader2 className="absolute w-24 h-24 animate-spin text-zaina-blue" />
+  // if (!siteSettings) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center h-screen bg-zaina-sky-blue-light">
+  //       <div className="relative flex items-center justify-center">
+  //         {/* Spinning border */}
+  //         <Loader2 className="absolute w-24 h-24 animate-spin text-zaina-blue" />
 
-          {/* Show logo only when loaded */}
-          {imageLoaded ? (
-            <img
-              src="/logo2.png"
-              alt="Zaina Logo"
-              className="w-16 h-16 rounded-full shadow-lg"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-gray-200" /> // placeholder circle
-          )}
-        </div>
-        <p className="mt-4 text-gray-700 font-medium text-lg">
-          Loading Zaina Collection...
-        </p>
-      </div>
-    );
-  }
+  //         {/* Show logo only when loaded */}
+  //         {imageLoaded ? (
+  //           <img
+  //             src="/logo2.png"
+  //             alt="Zaina Logo"
+  //             className="w-16 h-16 rounded-full shadow-lg"
+  //             // loading='lazy'
+  //           />
+  //         ) : (
+  //           <div className="w-16 h-16 rounded-full bg-gray-200" /> // placeholder circle
+  //         )}
+  //       </div>
+  //       <p className="mt-4 text-gray-700 font-medium text-lg">
+  //         Loading Zaina Collection...
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   const isHomePage = currentPage === "home";
   const pageContainerClass = `page-content ${isHomePage ? "is-home" : ""}`;
-
 
   return (
     <>
@@ -2267,8 +2392,8 @@ export function App(): React.ReactElement {
         products={products}
         categories={categories}
       />
-     // App.tsx
-{/* <main
+      // App.tsx
+      {/* <main
   className={pageContainerClass}
   style={{
     // Header.tsx sets --header-total-height dynamically
@@ -2280,9 +2405,7 @@ export function App(): React.ReactElement {
     {renderPage()}
   </ErrorBoundary>
 </main> */}
-
-
-<main
+      {/* <main
   className={pageContainerClass}
   style={{
     paddingTop: "117px",
@@ -2291,43 +2414,74 @@ export function App(): React.ReactElement {
 
 >
   <ErrorBoundary onHome={() => navigateToPage("home")}>
-    {renderPage()}
+<Suspense
+  fallback={
+    <div role="status" className="grid place-items-center min-h-[50vh] text-sm">
+      Loading…
+    </div>
+  }
+>
+  {renderPage()}
+</Suspense>
   </ErrorBoundary>
 
-  {/* <style>{`:root{--header-total-height:100px}`}</style> */}
-
-</main>
 
 
+</main> */}
+      
+      
+          <Helmet>
+            <link
+              rel="preconnect"
+              href={API_BASE_URL}
+              crossOrigin=""
+            />
+            <link
+              rel="dns-prefetch"
+              href="//zaina-collection-2-production.up.railway.app"
+            />
+          </Helmet>
 
+          <main
+            className={pageContainerClass}
+            style={{
+              paddingTop: "117px",
+              isolation: "isolate",
+            }}
+          >
+            <ErrorBoundary onHome={() => navigateToPage("home")}>
+              <Suspense
+                fallback={<div className="p-4 text-sm">Loading...</div>}
+              >
+                {renderPage()}
+              </Suspense>
+            </ErrorBoundary>
+          </main>
+        
+    
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <Footer
           navigateToPage={navigateToPage}
           footerSettings={siteSettings.footerSettings}
         />
       )}
-
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <FloatingWhatsAppButton />
       )}
-
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <MobileStickyFooter navigateToPage={navigateToPage} />
       )}
-
       <QuickViewModal
         isOpen={!!selectedProductForQuickView}
         onClose={handleCloseQuickView}
         product={selectedProductForQuickView}
       />
-
       <QuickShopModal
         isOpen={!!productForQuickShop}
         onClose={handleCloseQuickShop}
         product={productForQuickShop}
         onAddToCart={addToCart}
       />
-
       <CompareTray
         isOpen={isCompareTrayOpen}
         products={compareList}
@@ -2337,7 +2491,6 @@ export function App(): React.ReactElement {
         }
         onViewProductDetail={(p) => navigateToPage("productDetail", p)}
       />
-
       <FirstOrderOfferModal
         isOpen={showFirstOrderOffer}
         onClose={() => setShowFirstOrderOffer(false)}

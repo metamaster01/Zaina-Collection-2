@@ -5,6 +5,8 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import { logAdminAction } from '../services/audit.service';
 import bcrypt from 'bcryptjs';
 import { slugify, ensureUniqueSlug } from '../utils/slug';
+// import { delCache } from 'src/utils/simpleCache';
+import { delCache } from '../utils/simpleCache';
 
 const isMongoDbId = (id: string): boolean => {
     if(!id) return false;
@@ -872,55 +874,119 @@ export const getSiteSettings = async (req: AuthRequest, res: Response, next: Nex
 
 
 // controllers/admin.controller.ts
+// export const updateSiteSettings = async (req: AuthRequest, res: Response, next: NextFunction) => {
+//   try {
+//     const newData = req.body;
+
+//     // 1. Get existing settings
+//     const existing = await prisma.siteSettings.findFirst({
+//       where: { singleton: "global_settings" },
+//     });
+
+//     // 2. Merge existing + new (deep merge)
+//     const merged = {
+//       ...existing,
+//       ...newData,
+//       // merge JSON sub-objects individually so they don’t get wiped
+//       storeSettings: { 
+//         ...(typeof existing?.storeSettings === 'object' && existing?.storeSettings !== null ? existing.storeSettings : {}), 
+//         ...(typeof newData.storeSettings === 'object' && newData.storeSettings !== null ? newData.storeSettings : {}) 
+//       },
+//       seoSettings: { 
+//         ...(typeof existing?.seoSettings === 'object' && existing?.seoSettings !== null ? existing.seoSettings : {}), 
+//         ...(typeof newData.seoSettings === 'object' && newData.seoSettings !== null ? newData.seoSettings : {}) 
+//       },
+//       themeSettings: { 
+//         ...(typeof existing?.themeSettings === 'object' && existing?.themeSettings !== null ? existing.themeSettings : {}), 
+//         ...(typeof newData.themeSettings === 'object' && newData.themeSettings !== null ? newData.themeSettings : {}) 
+//       },
+//       footerSettings: { 
+//         ...(typeof existing?.footerSettings === 'object' && existing?.footerSettings !== null ? existing.footerSettings : {}), 
+//         ...(typeof newData.footerSettings === 'object' && newData.footerSettings !== null ? newData.footerSettings : {}) 
+//       },
+//       integrations: { 
+//         ...(typeof existing?.integrations === 'object' && existing?.integrations !== null ? existing.integrations : {}), 
+//         ...(typeof newData.integrations === 'object' && newData.integrations !== null ? newData.integrations : {}) 
+//       },
+//       headerLinks: newData.headerLinks ?? existing?.headerLinks ?? [],
+//     };
+
+//     // 3. Upsert with safe full object
+//     const settings = await prisma.siteSettings.upsert({
+//       where: { singleton: "global_settings" },
+//       update: merged,
+//       create: {
+//         singleton: "global_settings",
+//         ...merged,
+//       },
+//     });
+
+//     await logAdminAction(req, "Updated site settings");
+//     res.json(settings);
+//   } catch (error) {
+//     console.error("Failed to update site settings:", error);
+//     next(error);
+//   }
+// };
+
 export const updateSiteSettings = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const newData = req.body;
+    const newData = req.body ?? {};
 
-    // 1. Get existing settings
     const existing = await prisma.siteSettings.findFirst({
       where: { singleton: "global_settings" },
     });
 
-    // 2. Merge existing + new (deep merge)
-    const merged = {
-      ...existing,
-      ...newData,
-      // merge JSON sub-objects individually so they don’t get wiped
-      storeSettings: { 
-        ...(typeof existing?.storeSettings === 'object' && existing?.storeSettings !== null ? existing.storeSettings : {}), 
-        ...(typeof newData.storeSettings === 'object' && newData.storeSettings !== null ? newData.storeSettings : {}) 
-      },
-      seoSettings: { 
-        ...(typeof existing?.seoSettings === 'object' && existing?.seoSettings !== null ? existing.seoSettings : {}), 
-        ...(typeof newData.seoSettings === 'object' && newData.seoSettings !== null ? newData.seoSettings : {}) 
-      },
-      themeSettings: { 
-        ...(typeof existing?.themeSettings === 'object' && existing?.themeSettings !== null ? existing.themeSettings : {}), 
-        ...(typeof newData.themeSettings === 'object' && newData.themeSettings !== null ? newData.themeSettings : {}) 
-      },
-      footerSettings: { 
-        ...(typeof existing?.footerSettings === 'object' && existing?.footerSettings !== null ? existing.footerSettings : {}), 
-        ...(typeof newData.footerSettings === 'object' && newData.footerSettings !== null ? newData.footerSettings : {}) 
-      },
-      integrations: { 
-        ...(typeof existing?.integrations === 'object' && existing?.integrations !== null ? existing.integrations : {}), 
-        ...(typeof newData.integrations === 'object' && newData.integrations !== null ? newData.integrations : {}) 
-      },
-      headerLinks: newData.headerLinks ?? existing?.headerLinks ?? [],
+    // ---- IMPORTANT: never carry 'id' or 'singleton' into update ----
+    const {
+      id: _dropId,
+      singleton: _dropSingleton,
+      storeSettings: existingStore = {},
+      seoSettings: existingSeo = {},
+      themeSettings: existingTheme = {},
+      footerSettings: existingFooter = {},
+      integrations: existingIntegrations = {},
+      headerLinks: existingHeaderLinks = [],
+      ...restExisting // future-proof
+    } = (existing ?? {}) as any;
+
+    const {
+      id: _dropId2,
+      singleton: _dropSingleton2,
+      storeSettings: incomingStore = {},
+      seoSettings: incomingSeo = {},
+      themeSettings: incomingTheme = {},
+      footerSettings: incomingFooter = {},
+      integrations: incomingIntegrations = {},
+      headerLinks: incomingHeaderLinks,
+      ...restIncoming
+    } = (newData ?? {}) as any;
+
+    // Deep-ish merge of JSON sub-objects (arrays: replace unless you want union)
+    const mergedForUpdate = {
+      ...restExisting,
+      ...restIncoming,
+      storeSettings: { ...(existingStore || {}), ...(incomingStore || {}) },
+      seoSettings: { ...(existingSeo || {}), ...(incomingSeo || {}) },
+      themeSettings: { ...(existingTheme || {}), ...(incomingTheme || {}) },
+      footerSettings: { ...(existingFooter || {}), ...(incomingFooter || {}) },
+      integrations: { ...(existingIntegrations || {}), ...(incomingIntegrations || {}) },
+      headerLinks:
+        Array.isArray(incomingHeaderLinks) ? incomingHeaderLinks : existingHeaderLinks || [],
     };
 
-    // 3. Upsert with safe full object
     const settings = await prisma.siteSettings.upsert({
       where: { singleton: "global_settings" },
-      update: merged,
+      update: mergedForUpdate,                // <-- no id/singleton here
       create: {
         singleton: "global_settings",
-        ...merged,
+        ...mergedForUpdate,                   // <-- Prisma will create a new _id
       },
     });
 
     await logAdminAction(req, "Updated site settings");
     res.json(settings);
+    delCache('site-data')
   } catch (error) {
     console.error("Failed to update site settings:", error);
     next(error);

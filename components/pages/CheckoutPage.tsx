@@ -7,7 +7,7 @@ import InputField from '../shared/InputField';
 import Accordion from '../shared/Accordion'; 
 import OrderSuccessModal from '../OrderSuccessModal'; 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 declare global {
   interface Window {
@@ -109,7 +109,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
     setAppliedCoupon(null);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.post(`https://zaina-collection-backend.vercel.app/api/user/coupons/validate`, 
+        const response = await axios.post(`${API_BASE_URL}/api/user/coupons/validate`, 
         { code: couponCode },
         { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -197,7 +197,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cartItems, buyNowIte
     setIsProcessing(true);
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const { data: { orderId } } = await axios.post(`https://zaina-collection-backend.vercel.app/api/orders/payment/create`, 
+        const { data: { orderId } } = await axios.post(`${API_BASE_URL}/api/orders/payment/create`, 
             { totalAmount: total },
             { headers: { Authorization: `Bearer ${token}` } }
         );

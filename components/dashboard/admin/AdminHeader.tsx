@@ -9,7 +9,7 @@ import MoonIcon from '../../icons/MoonIcon';
 import NotificationBell from './NotificationBell';
 import { Notification, PageName, UserProfile, AdminUser } from '../../../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -39,7 +39,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const fetchNotifications = async () => {
     try {
         const token = localStorage.getItem('zaina-authToken');
-        const response = await axios.get(`https://zaina-collection-backend.vercel.app/api/admin/notifications`, {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/notifications`, {
              headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);

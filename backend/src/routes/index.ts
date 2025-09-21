@@ -9,6 +9,8 @@ import userRouter from './user.routes';
 import cartRouter from './cart.routes';
 import adminRouter from './admin.routes';
 import { getSiteData } from '../controllers/content.controller';
+import { getPublicSiteSettings } from "../controllers/content.controller";
+
 
 const router = express.Router();
 
@@ -22,5 +24,7 @@ router.use('/admin', adminRouter);
 
 // Public content route
 router.get('/site-data', getSiteData);
+router.get("/site-settings-public", getPublicSiteSettings); 
+
 
 export default router;
