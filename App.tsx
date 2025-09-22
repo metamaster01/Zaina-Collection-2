@@ -35,14 +35,17 @@ const AdminDashboardPage = lazy(
   () => import("./components/pages/AdminDashboardPage")
 );
 const ShopPage = lazy(() => import("./components/pages/ShopPage"));
-const ProductDetailPage = lazy(
-  () => import("./components/pages/ProductDetailPage")
+const ProductDetailPage = lazy(() =>
+  import("./components/pages/ProductDetailPage").then(m => ({ default: m.ProductDetailPage }))
 );
 const AboutUsPage = lazy(() => import("./components/pages/AboutUsPage"));
 const ContactPage = lazy(() => import("./components/pages/ContactPage"));
 const AuthPage = lazy(() => import("./components/pages/AuthPage"));
 const CartPage = lazy(() => import("./components/pages/CartPage"));
-const CheckoutPage = lazy(() => import("./components/pages/CheckoutPage"));
+const CheckoutPage = lazy(() =>
+  import("./components/pages/CheckoutPage").then(m => ({ default: m.CheckoutPage }))
+);
+
 const PolicyPage = lazy(() => import("./components/pages/PolicyPage"));
 const UserDashboardPage = lazy(
   () => import("./components/pages/UserDashboardPage")
