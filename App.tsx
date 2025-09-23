@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import axios from "axios";
-import { HelmetProvider } from "react-helmet-async";
+// import { HelmetProvider } from "react-helmet-async";
 import { Helmet } from "react-helmet-async";
 
 // import SEO from "./components/SEO";
-import { slugify } from "./components/utils/slugs";
+// import { slugify } from "./components/utils/slugs";
 
 // --- Import all components and constants ---
 // Components
@@ -36,14 +36,18 @@ const AdminDashboardPage = lazy(
 );
 const ShopPage = lazy(() => import("./components/pages/ShopPage"));
 const ProductDetailPage = lazy(() =>
-  import("./components/pages/ProductDetailPage").then(m => ({ default: m.ProductDetailPage }))
+  import("./components/pages/ProductDetailPage").then((m) => ({
+    default: m.ProductDetailPage,
+  }))
 );
 const AboutUsPage = lazy(() => import("./components/pages/AboutUsPage"));
 const ContactPage = lazy(() => import("./components/pages/ContactPage"));
 const AuthPage = lazy(() => import("./components/pages/AuthPage"));
 const CartPage = lazy(() => import("./components/pages/CartPage"));
 const CheckoutPage = lazy(() =>
-  import("./components/pages/CheckoutPage").then(m => ({ default: m.CheckoutPage }))
+  import("./components/pages/CheckoutPage").then((m) => ({
+    default: m.CheckoutPage,
+  }))
 );
 
 const PolicyPage = lazy(() => import("./components/pages/PolicyPage"));
@@ -535,25 +539,25 @@ export function App(): React.ReactElement {
     }
   }, [recentlyViewed, isLoggedIn]);
 
-// 1) Tiny, first-paint fetch (logo/theme/seo)
-const fetchPublicSettingsFirst = useCallback(async () => {
-  try {
-    const res = await axios.get(`${API_BASE_URL}/api/site-settings-public`);
-    const tiny = res.data || {};
+  // 1) Tiny, first-paint fetch (logo/theme/seo)
+  const fetchPublicSettingsFirst = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/site-settings-public`);
+      const tiny = res.data || {};
 
-    // merge into site settings immediately and persist
-    setSiteSettings(prev => {
-      const merged = { ...prev, ...tiny };
-      try { localStorage.setItem("zaina-siteSettings", JSON.stringify(merged)); } catch {}
-      return merged;
-    });
-  } catch (e) {
-    // Use defaults if this fails; don't block UI
-    console.warn("Public settings fetch failed; using defaults.", e);
-  }
-}, []);
-
-
+      // merge into site settings immediately and persist
+      setSiteSettings((prev) => {
+        const merged = { ...prev, ...tiny };
+        try {
+          localStorage.setItem("zaina-siteSettings", JSON.stringify(merged));
+        } catch {}
+        return merged;
+      });
+    } catch (e) {
+      // Use defaults if this fails; don't block UI
+      console.warn("Public settings fetch failed; using defaults.", e);
+    }
+  }, []);
 
   // const fetchInitialData = useCallback(async () => {
   //   try {
@@ -632,64 +636,72 @@ const fetchPublicSettingsFirst = useCallback(async () => {
   // }, []);
 
   // 2) Heavy data fetch (runs after first paint; cached on server)
-const fetchInitialData = useCallback(async () => {
-  try {
-    axios
-      .get(`${API_BASE_URL}/api/site-data`)
-      .then((response) => {
-        const data = response.data || {};
+  const fetchInitialData = useCallback(async () => {
+    try {
+      axios
+        .get(`${API_BASE_URL}/api/site-data`)
+        .then((response) => {
+          const data = response.data || {};
 
-        // --- products (normalize ids/categories) ---
-        const normalizedProducts = (data.products || []).map((p: any) => ({
-          ...p,
-          id: p?.id ?? p?._id ?? String(p?._id ?? ""),
-          category:
-            p?.category ??
-            p?.categoryName ??
-            (typeof p?.category === "object" && p?.category?.name ? p.category.name : "") ??
-            "",
-        }));
-        setProducts(normalizedProducts);
+          // --- products (normalize ids/categories) ---
+          const normalizedProducts = (data.products || []).map((p: any) => ({
+            ...p,
+            id: p?.id ?? p?._id ?? String(p?._id ?? ""),
+            category:
+              p?.category ??
+              p?.categoryName ??
+              (typeof p?.category === "object" && p?.category?.name
+                ? p.category.name
+                : "") ??
+              "",
+          }));
+          setProducts(normalizedProducts);
 
-        // --- categories (ensure subCategories array) ---
-        setCategories(
-          (data.categories || []).map((c: any) => ({
-            ...c,
-            subCategories: Array.isArray(c?.subCategories) ? c.subCategories : [],
-          }))
-        );
+          // --- categories (ensure subCategories array) ---
+          setCategories(
+            (data.categories || []).map((c: any) => ({
+              ...c,
+              subCategories: Array.isArray(c?.subCategories)
+                ? c.subCategories
+                : [],
+            }))
+          );
 
-        // --- homepage content ---
-        setHeroSlides(data.heroSlides || []);
-        setOccasions(data.occasions || []);
-        setLooks(data.looks || []);
-        setEmotions(data.emotions || []);
-        setShoppableVideos(data.shoppableVideos || []);
-        setTestimonials(data.testimonials || []);
-        setGuidedDiscoveryPaths(data.guidedDiscoveryPaths || []);
-        setFashionGalleryImages(data.fashionGalleryImages || []);
-        setCmsPages(data.cmsPages || []);
-        setActivityFeed(data.activityFeed || []);
-        setFloatingInfo(data.floatingInfo || []);
-        setFaqs(data.faqs || []);
+          // --- homepage content ---
+          setHeroSlides(data.heroSlides || []);
+          setOccasions(data.occasions || []);
+          setLooks(data.looks || []);
+          setEmotions(data.emotions || []);
+          setShoppableVideos(data.shoppableVideos || []);
+          setTestimonials(data.testimonials || []);
+          setGuidedDiscoveryPaths(data.guidedDiscoveryPaths || []);
+          setFashionGalleryImages(data.fashionGalleryImages || []);
+          setCmsPages(data.cmsPages || []);
+          setActivityFeed(data.activityFeed || []);
+          setFloatingInfo(data.floatingInfo || []);
+          setFaqs(data.faqs || []);
 
-        // --- site settings merge + persist ---
-        if (data.siteSettings) {
-          setSiteSettings(prev => {
-            const merged = { ...prev, ...data.siteSettings };
-            try { localStorage.setItem("zaina-siteSettings", JSON.stringify(merged)); } catch {}
-            return merged;
-          });
-        }
-      })
-      .catch((error) => {
-        console.error("Heavy site-data fetch failed:", error);
-      });
-  } catch (error) {
-    // No-op: handled in .catch above
-  }
-}, []);
-
+          // --- site settings merge + persist ---
+          if (data.siteSettings) {
+            setSiteSettings((prev) => {
+              const merged = { ...prev, ...data.siteSettings };
+              try {
+                localStorage.setItem(
+                  "zaina-siteSettings",
+                  JSON.stringify(merged)
+                );
+              } catch {}
+              return merged;
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Heavy site-data fetch failed:", error);
+        });
+    } catch (error) {
+      // No-op: handled in .catch above
+    }
+  }, []);
 
   const fetchUserData = useCallback(async () => {
     const token = localStorage.getItem("zaina-authToken");
@@ -743,60 +755,33 @@ const fetchInitialData = useCallback(async () => {
         shippingProvidersRes,
         paymentGatewaysRes,
       ] = await Promise.all([
-        axios.get(
-          `${API_BASE_URL}/api/admin/dashboard-all`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/reviews`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/faqs`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/categories`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/variant-attributes`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/analytics/wishlist`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/shipping/zones`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/shipping/providers`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        axios.get(
-          `${API_BASE_URL}/api/admin/payments/gateways`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
+        axios.get(`${API_BASE_URL}/api/admin/dashboard-all`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/reviews`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/faqs`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/categories`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/variant-attributes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/analytics/wishlist`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/shipping/zones`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/shipping/providers`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/payments/gateways`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       const data = dashboardRes.data;
@@ -828,25 +813,23 @@ const fetchInitialData = useCallback(async () => {
   // }, [fetchInitialData]);
 
   // 3) Mount effect: paint fast, then hydrate heavy data when idle
-useEffect(() => {
-  // Step 1: tiny settings → instant header/theme/logo
-  fetchPublicSettingsFirst();
+  useEffect(() => {
+    // Step 1: tiny settings → instant header/theme/logo
+    fetchPublicSettingsFirst();
 
-  // Step 2: hydrate the rest after first paint
-  const id =
-    (window as any).requestIdleCallback
+    // Step 2: hydrate the rest after first paint
+    const id = (window as any).requestIdleCallback
       ? (window as any).requestIdleCallback(() => fetchInitialData())
       : window.setTimeout(() => fetchInitialData(), 0);
 
-  return () => {
-    if ((window as any).cancelIdleCallback) {
-      (window as any).cancelIdleCallback(id);
-    } else {
-      clearTimeout(id as number);
-    }
-  };
-}, [fetchPublicSettingsFirst, fetchInitialData]);
-
+    return () => {
+      if ((window as any).cancelIdleCallback) {
+        (window as any).cancelIdleCallback(id);
+      } else {
+        clearTimeout(id as number);
+      }
+    };
+  }, [fetchPublicSettingsFirst, fetchInitialData]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -1101,10 +1084,7 @@ useEffect(() => {
     password: string;
   }): Promise<{ success: boolean; error?: string }> => {
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/auth/register`,
-        credentials
-      );
+      await axios.post(`${API_BASE_URL}/api/auth/register`, credentials);
       // Automatically log in after successful registration
       const loginResult = await handleLogin({
         email: credentials.email,
@@ -1304,6 +1284,15 @@ useEffect(() => {
     [isProductInCompare, isCompareTrayOpen]
   );
 
+  //ShopByEmotion and ShopByLook Handler
+  const handleEmotionSelect = (emotionTag: string) => {
+    navigateToPage("shop", { searchTerm: emotionTag });
+  };
+
+  const handleGetTheLook = (lookTitle: string, productIds: string[]) => {
+    navigateToPage("shop", { searchTerm: lookTitle });
+  };
+
   // --- USER DASHBOARD HANDLERS ---
   // const onUpdateProfile = async (updatedProfile: UserProfile) => {
   //   try {
@@ -1359,11 +1348,9 @@ useEffect(() => {
 
       // 3) NEVER send email, role, password, joinDate, _id, etc. in this request
 
-      const res = await axios.put(
-        "${API_BASE_URL}/api/user/profile",
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.put("${API_BASE_URL}/api/user/profile", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       // 4) Update local state with what the server actually saved (best), or with our payload (fallback)
       setCurrentUser(
@@ -1435,19 +1422,15 @@ useEffect(() => {
       if (isUpdating) {
         // Avoid sending id in the body if your API expects it only in the URL
         const { id, ...payload } = address as any;
-        await axios.put(
-          `${API_BASE_URL}/api/user/addresses/${id}`,
-          payload,
-          { headers }
-        );
+        await axios.put(`${API_BASE_URL}/api/user/addresses/${id}`, payload, {
+          headers,
+        });
       } else {
         // New address: do not send a fabricated id
         const { id, ...payload } = address as any;
-        await axios.post(
-          `${API_BASE_URL}/api/user/addresses`,
-          payload,
-          { headers }
-        );
+        await axios.post(`${API_BASE_URL}/api/user/addresses`, payload, {
+          headers,
+        });
       }
 
       // Re-fetch (or optimistically update if you prefer)
@@ -1460,10 +1443,9 @@ useEffect(() => {
   const onDeleteAddress = async (addressId: string) => {
     try {
       const token = localStorage.getItem("zaina-authToken");
-      await axios.delete(
-        `${API_BASE_URL}/api/user/addresses/${addressId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.delete(`${API_BASE_URL}/api/user/addresses/${addressId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       await fetchUserData();
       alert("Address deleted.");
     } catch (err) {
@@ -1510,11 +1492,9 @@ useEffect(() => {
         );
       } else {
         const { id, ...payload } = ticket as any;
-        await axios.post(
-          `${API_BASE_URL}/api/user/support-tickets`,
-          payload,
-          { headers }
-        );
+        await axios.post(`${API_BASE_URL}/api/user/support-tickets`, payload, {
+          headers,
+        });
       }
 
       await fetchUserData();
@@ -1541,11 +1521,9 @@ useEffect(() => {
       } else {
         // For new products, remove the temporary ID before sending
         const { id, ...payload } = productData;
-        await axios.post(
-          `${API_BASE_URL}/api/admin/products`,
-          payload,
-          { headers }
-        );
+        await axios.post(`${API_BASE_URL}/api/admin/products`, payload, {
+          headers,
+        });
         alert("Product created successfully!");
       }
       await fetchInitialData();
@@ -1585,11 +1563,9 @@ useEffect(() => {
           { headers }
         );
       } else {
-        await axios.post(
-          `${API_BASE_URL}/api/admin/categories`,
-          payload,
-          { headers }
-        );
+        await axios.post(`${API_BASE_URL}/api/admin/categories`, payload, {
+          headers,
+        });
       }
       alert("Category saved successfully!");
       await fetchInitialData();
@@ -1783,11 +1759,9 @@ useEffect(() => {
           );
         } else {
           const { id, ...payload } = item;
-          await axios.post(
-            `${API_BASE_URL}/api/admin/${endpoint}`,
-            payload,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          await axios.post(`${API_BASE_URL}/api/admin/${endpoint}`, payload, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
         }
         alert(`${itemType} saved successfully!`);
         await fetchInitialData();
@@ -1810,10 +1784,9 @@ useEffect(() => {
         return false;
       try {
         const token = localStorage.getItem("zaina-authToken");
-        await axios.delete(
-          `${API_BASE_URL}/api/admin/${endpoint}/${itemId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.delete(`${API_BASE_URL}/api/admin/${endpoint}/${itemId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         alert(`${itemType} deleted successfully!`);
         await fetchInitialData();
         if (userRole === "admin") await fetchAdminData();
@@ -1854,11 +1827,9 @@ useEffect(() => {
         );
       } else {
         const { id, ...payload } = coupon;
-        await axios.post(
-          `${API_BASE_URL}/api/admin/coupons`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.post(`${API_BASE_URL}/api/admin/coupons`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       alert("Coupon saved successfully!");
       await fetchAdminData();
@@ -1876,10 +1847,9 @@ useEffect(() => {
       return false;
     try {
       const token = localStorage.getItem("zaina-authToken");
-      await axios.delete(
-        `${API_BASE_URL}/api/admin/coupons/${couponId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.delete(`${API_BASE_URL}/api/admin/coupons/${couponId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       alert("Coupon deleted.");
       await fetchAdminData();
       return true;
@@ -1939,10 +1909,9 @@ useEffect(() => {
     // This would also need a backend endpoint to delete from GCS
     try {
       const token = localStorage.getItem("zaina-authToken");
-      await axios.delete(
-        `${API_BASE_URL}/api/admin/media/${fileId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.delete(`${API_BASE_URL}/api/admin/media/${fileId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       alert("Media deleted successfully.");
       await fetchAdminData();
     } catch (err: any) {
@@ -1957,11 +1926,9 @@ useEffect(() => {
   ): Promise<boolean> => {
     try {
       const token = localStorage.getItem("zaina-authToken");
-      await axios.put(
-        `${API_BASE_URL}/api/admin/settings/site`,
-        settings,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.put(`${API_BASE_URL}/api/admin/settings/site`, settings, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setSiteSettings(settings); // update local state
       return true;
     } catch (err) {
@@ -2063,6 +2030,14 @@ useEffect(() => {
               navigateToPage={navigateToPage}
             />
             <InstagramBanner />
+            <ShopByLook looks={looks} onGetTheLook={handleGetTheLook} />
+
+            <ShopByEmotion
+              emotions={emotions}
+              onEmotionSelect={handleEmotionSelect}
+            />
+
+            <WhyZainaSection />
           </>
         );
       case "shop":
@@ -2431,37 +2406,26 @@ useEffect(() => {
 
 
 </main> */}
-      
-      
-          <Helmet>
-            <link
-              rel="preconnect"
-              href={API_BASE_URL}
-              crossOrigin=""
-            />
-            <link
-              rel="dns-prefetch"
-              href="//zaina-collection-2-production.up.railway.app"
-            />
-          </Helmet>
-
-          <main
-            className={pageContainerClass}
-            style={{
-              paddingTop: "117px",
-              isolation: "isolate",
-            }}
-          >
-            <ErrorBoundary onHome={() => navigateToPage("home")}>
-              <Suspense
-                fallback={<div className="p-4 text-sm">Loading...</div>}
-              >
-                {renderPage()}
-              </Suspense>
-            </ErrorBoundary>
-          </main>
-        
-    
+      <Helmet>
+        <link rel="preconnect" href={API_BASE_URL} crossOrigin="" />
+        <link
+          rel="dns-prefetch"
+          href="//zaina-collection-2-production.up.railway.app"
+        />
+      </Helmet>
+      <main
+        className={pageContainerClass}
+        style={{
+          paddingTop: "117px",
+          isolation: "isolate",
+        }}
+      >
+        <ErrorBoundary onHome={() => navigateToPage("home")}>
+          <Suspense fallback={<div className="p-4 text-sm">Loading...</div>}>
+            {renderPage()}
+          </Suspense>
+        </ErrorBoundary>
+      </main>
       {currentPage !== "adminDashboard" && currentPage !== "auth" && (
         <Footer
           navigateToPage={navigateToPage}

@@ -15,7 +15,7 @@ const ShopByLook: React.FC<ShopByLookProps> = ({ looks, onGetTheLook }) => {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-zaina-neutral-light" id="shop-by-look">
+    <section className="py-12 md:py-16 bg-white" id="shop-by-look">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-heading-cinzel font-bold text-center text-zaina-text-primary mb-10 md:mb-12">
           Shop By Look
