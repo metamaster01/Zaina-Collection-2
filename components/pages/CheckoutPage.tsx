@@ -221,14 +221,39 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       discountAmount: discountAmount,
     };
 
-    const result = await onPlaceOrder(newOrder, guestDetails);
+    // const result = await onPlaceOrder(newOrder, guestDetails);
 
-    if (result.success) {
-      setShowSuccessModal(true);
-    } else {
-      setCheckoutError(result.error || "An unknown error occurred.");
-      setActiveStep("payment");
+    // if (result.success) {
+    //   setShowSuccessModal(true);
+    // } else {
+    //   setCheckoutError(result.error || "An unknown error occurred.");
+    //   setActiveStep("payment");
+    // }
+
+    try {
+  const result = await onPlaceOrder(newOrder, guestDetails);
+  if (result.success) {
+    setShowSuccessModal(true);
+  } else {
+    // if backend tells us unauthorized or user missing, redirect to login
+    if (result.error && /unauthoriz|401/i.test(result.error)) {
+      const returnUrl = window.location.pathname + window.location.search;
+      window.location.href = `/auth?redirect=${encodeURIComponent(returnUrl)}`;
+      return;
     }
+    setCheckoutError(result.error || "An unknown error occurred.");
+    setActiveStep('payment');
+  }
+} catch (err: any) {
+  // if backend returns 401 Unauthorized, redirect to login
+  if (err?.response?.status === 401) {
+    const returnUrl = window.location.pathname + window.location.search;
+    window.location.href = `/auth?redirect=${encodeURIComponent(returnUrl)}`;
+    return;
+  }
+  setCheckoutError(err?.response?.data?.message || err?.message || "An unknown error occurred.");
+  setActiveStep('payment');
+}
   };
 
   const processOrderPlacement = () => {
@@ -246,6 +271,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setIsProcessing(true);
     try {
       const token = localStorage.getItem("zaina-authToken");
+      if (!token && !currentUser) {
+  const returnUrl = window.location.pathname + window.location.search;
+  window.location.href = `/auth?redirect=${encodeURIComponent(returnUrl)}`;
+  return;
+}
       const {
         data: { orderId },
       } = await axios.post(
@@ -272,8 +302,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
-    } catch (err) {
-      alert("Failed to initiate payment.");
+    } catch (err : any) {
+
+        if (err?.response?.status === 401) {
+    const returnUrl = window.location.pathname + window.location.search;
+    window.location.href = `/auth?redirect=${encodeURIComponent(returnUrl)}`;
+    return;
+  }
+  alert('Failed to initiate payment.');
     } finally {
       setIsProcessing(false);
     }
@@ -480,7 +516,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <span>Wallets (Paytm, PhonePe, etc.)</span>
               </label>
 
-              {/* Disabled COD */}
+            
               {/* COD */}
               <label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer">
                 <input

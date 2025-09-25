@@ -286,7 +286,7 @@ function useFounderImage(srcPrimary: string, srcFallback: string) {
 }
 
 export default function AboutPage() {
-  const founder = useFounderImage("/founder.png", "/userfounder.png")
+  const founder = useFounderImage("/about-founder-1.png", "/userfounder.png")
 
   return (
     <main className="min-h-screen bg-white">
@@ -358,7 +358,7 @@ export default function AboutPage() {
           {/* Left images */}
           <div className="space-y-6">
             <img
-              src="/about-1.png"
+              src="/about-founder-2.png"
               alt="Craft detail"
               width={499}
               height={559}
